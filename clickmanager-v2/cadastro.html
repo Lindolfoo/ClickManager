@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Criar conta – Click Manager</title>
+<link rel="icon" href="/icons/favicon.ico" />
+<link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/favicon-32x32.svg" />
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/android-chrome-512x512.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+:root{
+  --bg:#fafaf8;--bg2:#f3f2ee;--surface:#fff;--border:#e8e5df;
+  --text:#1c1917;--text2:#78716c;--text3:#a8a29e;
+  --accent:#7c3aed;--accent2:#6d28d9;--accent-light:#f5f3ff;--accent-mid:#ede9fe;
+  --green:#059669;--green-bg:#ecfdf5;--danger:#dc2626;--danger-bg:#fef2f2;
+  --font-serif:'Instrument Serif',Georgia,serif;--font:'Outfit',sans-serif;
+  --r:14px;--r-sm:9px;--ease:.22s cubic-bezier(.4,0,.2,1);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;transition:background var(--ease),color var(--ease)}
+
+/* layout */
+.auth-layout{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 60px)}
+.auth-side{
+  background:linear-gradient(160deg,#312e81 0%,var(--accent) 100%);
+  padding:48px;display:flex;flex-direction:column;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+.auth-side{border-radius:0 36px 36px 0}
+.auth-side-content{
+  position:relative;
+  z-index:1;
+  max-width:560px;
+  width:100%;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  justify-content:center;
+}
+.auth-side-photo-bg{position:absolute;inset:0;z-index:0;overflow:hidden}
+.auth-side-photo-bg img{width:100%;height:100%;object-fit:cover;object-position:center 35%;opacity:.75}
+.auth-side-photo-bg::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(8,4,18,.72) 0%,rgba(8,4,18,.38) 45%,rgba(8,4,18,.70) 100%);
+}
+.auth-brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:1.2rem;margin-bottom:44px}
+.auth-brand-icon{width:40px;height:40px;background:rgba(255,255,255,.22);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.05rem}
+.auth-brand-icon.logo-image{background:transparent}
+.auth-brand-icon.logo-image img{width:100%;height:100%;object-fit:contain;border-radius:inherit;display:block}
+.auth-side h2{font-family:var(--font-serif);font-size:2.6rem;color:#fff;line-height:1.05;margin-bottom:18px;max-width:560px}
+.auth-side h2 em{font-style:italic;opacity:.92}
+.auth-side p{color:rgba(255,255,255,.82);font-size:1rem;line-height:1.75;max-width:460px}
+.perks{display:flex;flex-direction:column;gap:14px;position:relative;z-index:1}
+.perk{display:flex;align-items:flex-start;gap:12px}
+.perk-icon{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#fff;flex-shrink:0;margin-top:1px}
+.perk-text strong{display:block;color:#fff;font-size:.875rem;margin-bottom:2px}
+.perk-text span{color:rgba(255,255,255,.65);font-size:.78rem}
+
+/* form */
+.auth-form-side{display:flex;align-items:flex-start;justify-content:center;padding:48px 40px;background:var(--surface);overflow-y:auto}
+.auth-form-wrap{width:100%;max-width:440px}
+.auth-form-header{margin-bottom:28px}
+.auth-form-header h1{font-family:var(--font-serif);font-size:1.8rem;color:var(--text);margin-bottom:6px}
+.auth-form-header p{font-size:.875rem;color:var(--text2)}
+.auth-form-header p a{color:var(--accent);font-weight:600}
+.form-group{margin-bottom:16px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-label{display:block;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:6px}
+.form-label-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.form-control{width:100%;padding:11px 14px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font);font-size:.875rem;transition:border-color var(--ease),box-shadow var(--ease)}
+.form-control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-mid)}
+.form-control::placeholder{color:var(--text3)}
+.form-control.error{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-bg)}
+.form-control.ok{border-color:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+.input-wrap{position:relative}
+.input-wrap .form-control{padding-right:44px}
+/* Hide native browser password reveal/clear buttons so only our custom toggle appears */
+input[type="password"]::-ms-reveal, input[type="password"]::-ms-clear { display: none; }
+input[type="password"]::-webkit-textfield-decoration-button,
+input[type="password"]::-webkit-textfield-decoration-container,
+input[type="password"]::-webkit-credentials-auto-fill-button { display: none !important; }
+.input-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:4px;transition:color var(--ease)}
+.input-toggle:hover{color:var(--accent)}
+
+/* força senha */
+.pwd-strength{margin-top:6px;height:3px;background:var(--border);border-radius:99px;overflow:hidden}
+.pwd-strength-bar{height:100%;border-radius:99px;transition:width .4s,background .4s;width:0%}
+.pwd-hint{font-size:.7rem;color:var(--text3);margin-top:4px}
+
+/* plano selector */
+.plan-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:0}
+.plan-opt{border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;text-align:center;cursor:pointer;transition:all var(--ease);background:var(--bg)}
+.plan-opt:hover{border-color:var(--accent);background:var(--accent-light)}
+.plan-opt.selected{border-color:var(--accent);background:var(--accent-mid)}
+.plan-opt-name{font-size:.75rem;font-weight:700;color:var(--text);margin-bottom:2px}
+.plan-opt-price{font-size:.68rem;color:var(--text2)}
+
+/* Pricing toggle (mensal / anual) for signup page */
+.pricing-toggle{display:flex;align-items:center;gap:10px;margin:0;justify-content:flex-end}
+.pricing-toggle .toggle-label{font-size:.88rem;color:var(--text2);font-weight:600}
+.toggle-track{width:44px;height:24px;background:var(--border);border-radius:99px;cursor:pointer;position:relative;transition:background var(--ease)}
+.toggle-track.on{background:var(--accent)}
+.toggle-thumb{width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left var(--ease);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle-track.on .toggle-thumb{left:23px}
+.discount-pill{background:var(--green-bg);color:var(--green);font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid var(--green)}
+
+@media(max-width:520px){
+  .form-label-row{flex-direction:column;align-items:flex-start}
+  .pricing-toggle{margin-top:8px;justify-content:flex-start}
+}
+
+/* cartão de crédito */
+.card-section{overflow:hidden;max-height:0;opacity:0;transition:max-height .45s cubic-bezier(.4,0,.2,1),opacity .35s ease,margin .35s ease;margin-bottom:0}
+.card-section.open{max-height:420px;opacity:1;margin-bottom:0}
+.card-section-inner{border:1.5px solid var(--accent);border-radius:var(--r-sm);padding:16px;background:var(--accent-light);margin-bottom:16px}
+.card-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-icons{display:flex;gap:6px;margin-left:auto}
+.card-icon-badge{font-size:.7rem;padding:2px 7px;border-radius:4px;font-weight:700;background:var(--surface);border:1.5px solid var(--border);color:var(--text2)}
+.card-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* termos */
+.form-check{display:flex;align-items:flex-start;gap:8px;cursor:pointer}
+.form-check input{accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;margin-top:2px}
+.form-check label{font-size:.8rem;color:var(--text2);cursor:pointer;line-height:1.5}
+.form-check a{color:var(--accent);font-weight:600}
+
+/* alert */
+.alert{padding:12px 16px;border-radius:var(--r-sm);font-size:.85rem;margin-bottom:16px;display:none;align-items:center;gap:8px}
+.alert.show{display:flex}
+.alert-error{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+.alert-success{background:var(--green-bg);color:var(--green);border:1px solid var(--green)}
+
+/* btn */
+.btn-submit{width:100%;padding:13px;border-radius:var(--r-sm);background:var(--accent);color:#fff;font-family:var(--font);font-size:.95rem;font-weight:700;border:none;cursor:pointer;transition:all var(--ease);display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-submit:hover:not(:disabled){background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 20px rgba(124,58,237,.3)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* nav */
+.auth-nav{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px solid var(--border);background:var(--surface)}
+.auth-nav .logo-image{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--accent)}
+.auth-nav .logo-image img{width:100%;height:100%;object-fit:contain;display:block}
+.btn-icon{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--ease)}
+.btn-icon:hover{background:var(--accent-mid);color:var(--accent);border-color:var(--accent)}
+
+@media(max-width:1024px){
+  .auth-side{display:none}
+  .auth-layout{grid-template-columns:1fr}
+  .auth-form-side{padding:34px 28px}
+}
+@media(max-width:768px){
+  .auth-form-side{padding:28px 20px}
+  .auth-form-header h1{font-size:2.05rem}
+  .auth-form-header p{font-size:.95rem}
+  .form-row{grid-template-columns:1fr}
+  .auth-brand{font-size:1.05rem}
+  .auth-side h2{font-size:2rem}
+  .auth-side p{font-size:.95rem;max-width:100%}
+}
+</style>
+</head>
+<body>
+
+<header class="auth-nav">
+  <a href="index.html" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--text);text-decoration:none;font-size:.95rem">
+    <div class="logo-image">
+      <img src="/icons/logo.svg" alt="Click Manager logo" />
+    </div>
+    Click Manager
+  </a>
+  <div style="display:flex;align-items:center;gap:8px">
+    <a href="login.html" style="font-size:.82rem;color:var(--accent);font-weight:600">Já tenho conta →</a>
+  </div>
+</header>
+
+<div class="auth-layout">
+  <!-- LADO ESQUERDO -->
+  <div class="auth-side">
+    <div class="auth-side-photo-bg" aria-hidden="true">
+      <img src="img/lavanda.jpg" alt="">
+    </div>
+    <div class="auth-side-content">
+      <div class="auth-brand">
+        <div class="auth-brand-icon logo-image"><img src="/icons/logo.svg" alt="Click Manager logo"/></div>
+        Click Manager
+      </div>
+      <h2>Comece de graça.<br><em>Cresça sem limites.</em></h2>
+      <p style="margin-bottom:40px">Junte-se a mais de 1.000 fotógrafos que já organizam seu estúdio com o Click Manager.</p>
+    </div>
+  </div>
+
+  <!-- LADO DIREITO -->
+  <div class="auth-form-side">
+    <div class="auth-form-wrap">
+      <div class="auth-form-header">
+        <h1>Criar conta</h1>
+        <p>Já tem conta? <a href="login.html">Entrar</a></p>
+      </div>
+
+      <div class="alert alert-error" id="alertError" role="alert">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span id="alertErrorMsg">Erro ao criar conta.</span>
+      </div>
+      <div class="alert alert-success" id="alertSuccess">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>Conta criada com sucesso! Redirecionando...</span>
+      </div>
+
+      <!-- PLANO -->
+      <div class="form-group">
+        <div class="form-label-row">
+          <div class="form-label">Escolha seu plano</div>
+          <div class="pricing-toggle">
+            <span class="toggle-label">Mensal</span>
+            <div class="toggle-track" id="billingToggleSignup"><div class="toggle-thumb"></div></div>
+            <span class="toggle-label">Anual</span>
+            <span class="discount-pill">-10% de desconto</span>
+          </div>
+        </div>
+
+        <div class="plan-selector">
+          <div class="plan-opt selected" data-plan="starter" data-monthly="Grátis" data-annual="Grátis">
+            <div class="plan-opt-name">Starter</div>
+            <div class="plan-opt-price">Grátis</div>
+          </div>
+          <div class="plan-opt" data-plan="pro" data-monthly="R$49/mês" data-annual="R$528/ano">
+            <div class="plan-opt-name">Pro</div>
+            <div class="plan-opt-price">R$49/mês</div>
+          </div>
+          <div class="plan-opt" data-plan="studio" data-monthly="R$99/mês" data-annual="R$1068/ano">
+            <div class="plan-opt-name">Studio</div>
+            <div class="plan-opt-price">R$99/mês</div>
+          </div>
+        </div>
+        <input type="hidden" id="planSelected" value="starter"/>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="margin:0">
+          <label class="form-label" for="nome">Nome</label>
+          <input type="text" class="form-control" id="nome" placeholder="Seu nome" autocomplete="given-name"/>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label" for="sobrenome">Sobrenome</label>
+          <input type="text" class="form-control" id="sobrenome" placeholder="Sobrenome" autocomplete="family-name"/>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:16px">
+        <label class="form-label" for="email">E-mail</label>
+        <input type="email" class="form-control" id="email" placeholder="seu@email.com" autocomplete="email"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="telefone">WhatsApp (opcional)</label>
+        <input type="tel" class="form-control" id="telefone" placeholder="(11) 99999-9999"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="senha">Senha</label>
+        <div class="input-wrap">
+          <input type="password" class="form-control" id="senha" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/>
+          <button type="button" class="input-toggle" id="toggleSenha">
+            <i class="bi bi-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+        <div class="pwd-strength"><div class="pwd-strength-bar" id="pwdBar"></div></div>
+        <div class="pwd-hint" id="pwdHint">Use letras, números e símbolos para uma senha forte.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirma">Confirmar senha</label>
+        <div class="input-wrap">
+          <input type="password" class="form-control" id="confirma" placeholder="Repita a senha" autocomplete="new-password"/>
+          <button type="button" class="input-toggle" id="toggleConfirma">
+            <i class="bi bi-eye" id="eyeIcon2"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- CARTÃO DE CRÉDITO (planos pagos) -->
+      <div class="card-section" id="cardSection">
+        <div class="card-section-inner">
+          <div class="card-section-title">
+            <i class="bi bi-credit-card-fill"></i> Dados do cartão
+            <div class="card-icons">
+              <span class="card-icon-badge">VISA</span>
+              <span class="card-icon-badge">MC</span>
+              <span class="card-icon-badge">ELO</span>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label" for="cardNumber">Número do cartão</label>
+            <input type="text" class="form-control" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19" autocomplete="cc-number" inputmode="numeric"/>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label" for="cardName">Nome no cartão</label>
+            <input type="text" class="form-control" id="cardName" placeholder="Como está no cartão" autocomplete="cc-name"/>
+          </div>
+          <div class="card-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="cardExpiry">Validade</label>
+              <input type="text" class="form-control" id="cardExpiry" placeholder="MM/AA" maxlength="5" autocomplete="cc-exp" inputmode="numeric"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="cardCvv">CVV</label>
+              <input type="text" class="form-control" id="cardCvv" placeholder="000" maxlength="4" autocomplete="cc-csc" inputmode="numeric"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:16px">
+        <label class="form-check">
+          <input type="checkbox" id="termos"/>
+          <label for="termos">Concordo com os <a href="#">Termos de Uso</a> e <a href="#">Política de Privacidade</a> do Click Manager.</label>
+        </label>
+      </div>
+
+      <button class="btn-submit" id="btnCadastro">
+        <span id="btnText">Criar minha conta grátis</span>
+        <div class="spinner" id="spinner"></div>
+      </button>
+
+      <p style="font-size:.72rem;color:var(--text3);text-align:center;margin-top:14px">
+        <i class="bi bi-shield-fill-check" style="color:var(--green)"></i>
+        Seus dados são protegidos. Não compartilhamos com terceiros.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ── Seletor de plano ──────────────────────────────────────
+var cardSection=document.getElementById("cardSection");
+var btnText=document.getElementById("btnText");
+var billingToggle = document.getElementById('billingToggleSignup');
+var annualSignup = false; // default mensal
+
+function updatePricesOnPage(){
+  document.querySelectorAll('.plan-opt').forEach(function(p){
+    var priceEl = p.querySelector('.plan-opt-price');
+    if(!priceEl) return;
+    var monthly = p.getAttribute('data-monthly') || priceEl.textContent;
+    var annual  = p.getAttribute('data-annual') || monthly;
+    priceEl.textContent = annualSignup ? annual : monthly;
+  });
+  // Update CTA if a paid plan is selected
+  var sel = document.querySelector('.plan-opt.selected');
+  if(sel){
+    var plano = sel.getAttribute('data-plan');
+    if(plano==='starter'){
+      cardSection.classList.remove('open');
+      btnText.textContent = 'Criar minha conta grátis';
+    } else {
+      cardSection.classList.add('open');
+      var priceText = sel.querySelector('.plan-opt-price').textContent;
+      btnText.textContent = 'Assinar plano '+sel.querySelector('.plan-opt-name').textContent+' — '+priceText;
+    }
+  }
+}
+
+// toggle click
+if(billingToggle){
+  billingToggle.addEventListener('click', function(){
+    annualSignup = !annualSignup;
+    billingToggle.classList.toggle('on', annualSignup);
+    updatePricesOnPage();
+  });
+}
+
+// plan selection
+document.querySelectorAll('.plan-opt').forEach(function(opt){
+  opt.addEventListener('click', function(){
+    document.querySelectorAll('.plan-opt').forEach(function(o){ o.classList.remove('selected'); });
+    opt.classList.add('selected');
+    document.getElementById('planSelected').value = opt.getAttribute('data-plan');
+    updatePricesOnPage();
+  });
+});
+
+// initialize display
+updatePricesOnPage();
+
+// ── Formatação do cartão ──────────────────────────────────
+document.getElementById("cardNumber").addEventListener("input",function(){
+  var v=this.value.replace(/\D/g,"").slice(0,16);
+  this.value=v.replace(/(.{4})/g,"$1 ").trim();
+});
+document.getElementById("cardExpiry").addEventListener("input",function(){
+  var v=this.value.replace(/\D/g,"").slice(0,4);
+  if(v.length>2)v=v.slice(0,2)+"/"+v.slice(2);
+  this.value=v;
+});
+document.getElementById("cardCvv").addEventListener("input",function(){
+  this.value=this.value.replace(/\D/g,"").slice(0,4);
+});
+
+// ── Toggle ver senha ──────────────────────────────────────
+function makeToggle(btnId,inpId,iconId){
+  document.getElementById(btnId).addEventListener("click",function(){
+    var inp=document.getElementById(inpId),icon=document.getElementById(iconId);
+    var show=inp.type==="password";
+    inp.type=show?"text":"password";
+    icon.className=show?"bi bi-eye-slash":"bi bi-eye";
+  });
+}
+makeToggle("toggleSenha","senha","eyeIcon");
+makeToggle("toggleConfirma","confirma","eyeIcon2");
+
+// ── Força da senha ────────────────────────────────────────
+document.getElementById("senha").addEventListener("input",function(){
+  var v=this.value;
+  var bar=document.getElementById("pwdBar");
+  var hint=document.getElementById("pwdHint");
+  var score=0;
+  if(v.length>=8)score++;if(v.length>=12)score++;
+  if(/[A-Z]/.test(v))score++;if(/[0-9]/.test(v))score++;if(/[^A-Za-z0-9]/.test(v))score++;
+  var configs=[
+    {w:"0%",bg:"var(--border)",txt:""},
+    {w:"25%",bg:"var(--danger)",txt:"Muito fraca"},
+    {w:"50%",bg:"#f59e0b",txt:"Fraca"},
+    {w:"75%",bg:"#3b82f6",txt:"Boa"},
+    {w:"90%",bg:"var(--green)",txt:"Forte"},
+    {w:"100%",bg:"var(--green)",txt:"Muito forte"},
+  ];
+  var c=configs[Math.min(score,5)];
+  bar.style.width=c.w;bar.style.background=c.bg;
+  hint.textContent=c.txt||"Use letras, números e símbolos para uma senha forte.";
+  hint.style.color=c.bg;
+});
+
+// ── Cadastro ──────────────────────────────────────────────
+document.getElementById("btnCadastro").addEventListener("click",async function(){
+  var nome=document.getElementById("nome").value.trim();
+  var sobrenome=document.getElementById("sobrenome").value.trim();
+  var email=document.getElementById("email").value.trim();
+  var senha=document.getElementById("senha").value;
+  var confirma=document.getElementById("confirma").value;
+  var termos=document.getElementById("termos").checked;
+  var plano=document.getElementById("planSelected").value;
+
+  var alertErr=document.getElementById("alertError");
+  var alertOk=document.getElementById("alertSuccess");
+  alertErr.classList.remove("show");alertOk.classList.remove("show");
+
+  function showErr(msg){document.getElementById("alertErrorMsg").textContent=msg;alertErr.classList.add("show");alertErr.scrollIntoView({block:"nearest",behavior:"smooth"});}
+
+  if(!nome){showErr("Informe seu nome.");return;}
+  if(!email||!email.includes("@")){showErr("Informe um e-mail válido.");return;}
+  if(senha.length<8){showErr("A senha deve ter ao menos 8 caracteres.");return;}
+  if(senha!==confirma){showErr("As senhas não coincidem.");document.getElementById("confirma").classList.add("error");return;}
+
+  if(plano!=="starter"){
+    var num=document.getElementById("cardNumber").value.replace(/\s/g,"");
+    var cname=document.getElementById("cardName").value.trim();
+    var exp=document.getElementById("cardExpiry").value;
+    var cvv=document.getElementById("cardCvv").value;
+    if(num.length<16){showErr("Informe o número completo do cartão.");return;}
+    if(!cname){showErr("Informe o nome como está no cartão.");return;}
+    if(!/^\d{2}\/\d{2}$/.test(exp)){showErr("Informe a validade no formato MM/AA.");return;}
+    if(cvv.length<3){showErr("Informe o CVV do cartão.");return;}
+  }
+
+  if(!termos){showErr("Aceite os termos para continuar.");return;}
+
+  var btn=document.getElementById("btnCadastro");
+  var spinner=document.getElementById("spinner");
+  btn.disabled=true;spinner.style.display="block";btnText.textContent="Criando conta...";
+
+  try{
+    var res=await fetch("http://localhost:5000/api/auth/register",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({nome:nome+" "+sobrenome,email:email,senha:senha,telefone:document.getElementById("telefone").value,planoAtivo:plano})
+    });
+    var data=await res.json();
+    if(res.ok){
+      alertOk.classList.add("show");
+      setTimeout(function(){window.location.href="login.html";},1500);
+    }else{
+      showErr(data.message||"Erro ao criar conta. Tente novamente.");
+    }
+  }catch(e){
+    // API offline → NÃO cria conta, avisa o usuário
+    showErr("Não foi possível conectar ao servidor. Verifique se a API está rodando em localhost:5000.");
+  }finally{
+    btn.disabled=false;spinner.style.display="none";
+    var planoFinal=document.getElementById("planSelected").value;
+    if(planoFinal==="starter"){
+      btnText.textContent="Criar minha conta grátis";
+    }else{
+      var nomePlano=document.querySelector(".plan-opt.selected .plan-opt-name").textContent;
+      var precoPlano=document.querySelector(".plan-opt.selected .plan-opt-price").textContent;
+      btnText.textContent="Assinar plano "+nomePlano+" — "+precoPlano;
+    }
+  }
+});
+</script>
+</body>
+</html>

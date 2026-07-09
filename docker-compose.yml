@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: clickmanager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: clickmanager
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # A API só sobe depois que o banco aceita conexões, evitando
+      # falha da migration automática na primeira execução.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d clickmanager"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clickmanager-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=clickmanager;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}"
+      Jwt__Key:      ${JWT_KEY:?defina JWT_KEY no arquivo .env (mínimo 32 caracteres)}
+      Jwt__Issuer:   ClickManagerApi
+      Jwt__Audience: ClickManagerFrontend
+      App__FrontendBaseUrl:  ${FRONTEND_BASE_URL:-http://localhost:5500}
+      Cors__AllowedOrigins__0: ${FRONTEND_BASE_URL:-http://localhost:5500}
+      EmailSettings__SmtpHost:       ${SMTP_HOST:-smtp.gmail.com}
+      EmailSettings__SmtpPort:       ${SMTP_PORT:-587}
+      EmailSettings__SenderName:     Click Manager
+      EmailSettings__SenderEmail:    ${SMTP_EMAIL:-}
+      EmailSettings__SenderPassword: ${SMTP_PASSWORD:-}
+      EmailSettings__AdminEmail:     ${ADMIN_EMAIL:-}
+    ports:
+      - "5000:8080"
+    volumes:
+      - uploads:/app/wwwroot/uploads
+
+volumes:
+  pgdata:
+  uploads:

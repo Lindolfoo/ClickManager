@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ClickManagerApi.Tests/ClickManagerApi.Tests.csproj" />
+  <Project Path="ClickManagerApi/ClickManagerApi.csproj" />
+</Solution>

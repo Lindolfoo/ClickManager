@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+.git/
+.github/
+.gitignore
+.dockerignore
+docker-compose.yml
+README.md
+LICENSE
+clickmanager-v2/
+**/appsettings.Development.json
+**/*.user

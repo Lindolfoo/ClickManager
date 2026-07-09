@@ -1,0 +1,52 @@
+## ── Build outputs ────────────────────────────────────────────
+[Bb]in/
+[Oo]bj/
+out/
+publish/
+
+## ── Secrets e configurações locais ──────────────────────────
+appsettings.Development.json
+appsettings.Local.json
+*.local.json
+.env
+.env.*
+!.env.example
+
+## ── Visual Studio / VS Code ──────────────────────────────────
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+.idea/
+
+## ── .NET ─────────────────────────────────────────────────────
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.nupkg
+*.snupkg
+**/[Pp]ackages/
+!**/[Pp]ackages/build/
+*.log
+*.lscache
+
+## ── Node / frontend ──────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+dist/
+.cache/
+
+## ── Sistema operacional ──────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## ── Uploads (gerados em runtime) ─────────────────────────────
+ClickManagerApi/wwwroot/uploads/
+
+## Local test runtimes
+ClickManagerApi.Tests/FunctionalTests/oracleJdk-26/

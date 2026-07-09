@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Redefinir senha – Click Manager</title>
+<link rel="icon" href="/icons/favicon.ico" />
+<link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/favicon-32x32.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+:root{
+  --bg:#fafaf8;--surface:#fff;--border:#e8e5df;
+  --text:#1c1917;--text2:#78716c;--text3:#a8a29e;
+  --accent:#7c3aed;--accent2:#6d28d9;--accent-mid:#ede9fe;
+  --green:#059669;--green-bg:#ecfdf5;--danger:#dc2626;--danger-bg:#fef2f2;
+  --font-serif:'Instrument Serif',Georgia,serif;--font:'Outfit',sans-serif;
+  --r:14px;--ease:.22s cubic-bezier(.4,0,.2,1);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.1);
+}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  box-shadow:var(--shadow-lg);width:100%;max-width:440px;padding:40px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.1rem;
+  color:var(--accent);margin-bottom:28px}
+.brand-icon{width:36px;height:36px;background:var(--accent-mid);border-radius:10px;
+  display:flex;align-items:center;justify-content:center}
+h1{font-family:var(--font-serif);font-size:1.8rem;margin-bottom:6px}
+.sub{font-size:.875rem;color:var(--text2);margin-bottom:28px;line-height:1.6}
+
+.alert{display:none;align-items:flex-start;gap:9px;padding:12px 14px;border-radius:9px;
+  font-size:.85rem;margin-bottom:18px;line-height:1.5}
+.alert.show{display:flex}
+.alert-error{background:var(--danger-bg);color:var(--danger)}
+.alert-success{background:var(--green-bg);color:var(--green)}
+
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:.78rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--text2);margin-bottom:7px}
+.form-control{width:100%;padding:13px 15px;border:1.5px solid var(--border);border-radius:9px;
+  font-family:inherit;font-size:.95rem;color:var(--text);background:var(--surface);
+  transition:border-color var(--ease),box-shadow var(--ease)}
+.form-control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-mid)}
+.form-control::placeholder{color:var(--text3)}
+.input-wrap{position:relative}
+.input-wrap .form-control{padding-right:44px}
+input[type="password"]::-ms-reveal,input[type="password"]::-ms-clear{display:none}
+.input-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;
+  border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:4px}
+.input-toggle:hover{color:var(--accent)}
+
+.hint{font-size:.78rem;color:var(--text3);margin-top:6px}
+.hint.ok{color:var(--green)}
+
+.btn-submit{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;
+  border-radius:9px;font-family:inherit;font-size:.95rem;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:background var(--ease),transform var(--ease)}
+.btn-submit:hover:not(:disabled){background:var(--accent2);transform:translateY(-1px)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed}
+.spinner{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.spinner.show{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.foot{text-align:center;margin-top:22px;font-size:.85rem;color:var(--text2)}
+.foot a{color:var(--accent);font-weight:600;text-decoration:none}
+.foot a:hover{text-decoration:underline}
+@media(max-width:480px){.card{padding:28px 22px}}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="brand">
+    <span class="brand-icon"><i class="bi bi-camera"></i></span>
+    Click Manager
+  </div>
+
+  <h1>Criar nova senha</h1>
+  <p class="sub">Escolha uma senha com pelo menos 8 caracteres. Ela substituirá a anterior imediatamente.</p>
+
+  <div class="alert alert-error" id="alertError" role="alert">
+    <i class="bi bi-exclamation-circle-fill"></i>
+    <span id="alertErrorMsg"></span>
+  </div>
+  <div class="alert alert-success" id="alertSuccess" role="status">
+    <i class="bi bi-check-circle-fill"></i>
+    <span id="alertSuccessMsg">Senha redefinida! Redirecionando para o login...</span>
+  </div>
+
+  <div id="formArea">
+    <div class="form-group">
+      <label class="form-label" for="novaSenha">Nova senha</label>
+      <div class="input-wrap">
+        <input type="password" class="form-control" id="novaSenha" placeholder="••••••••" autocomplete="new-password"/>
+        <button type="button" class="input-toggle" id="toggleSenha" aria-label="Ver senha">
+          <i class="bi bi-eye" id="eyeIcon"></i>
+        </button>
+      </div>
+      <div class="hint" id="hintSenha">Mínimo de 8 caracteres.</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="confirmaSenha">Confirmar nova senha</label>
+      <input type="password" class="form-control" id="confirmaSenha" placeholder="••••••••" autocomplete="new-password"/>
+    </div>
+
+    <button class="btn-submit" id="btnReset">
+      <span id="btnText">Redefinir senha</span>
+      <div class="spinner" id="spinner"></div>
+    </button>
+  </div>
+
+  <div class="foot">
+    <a href="login.html">Voltar para o login</a>
+  </div>
+</div>
+
+<script>
+// URL base da API (ajuste em produção)
+var API = "http://localhost:5000/api";
+
+var alertErr  = document.getElementById("alertError");
+var alertOk   = document.getElementById("alertSuccess");
+var formArea  = document.getElementById("formArea");
+var btnReset  = document.getElementById("btnReset");
+var btnText   = document.getElementById("btnText");
+var spinner   = document.getElementById("spinner");
+var inpSenha  = document.getElementById("novaSenha");
+var inpConf   = document.getElementById("confirmaSenha");
+var hintSenha = document.getElementById("hintSenha");
+
+function erro(msg){
+  document.getElementById("alertErrorMsg").textContent = msg;
+  alertErr.classList.add("show");
+  alertOk.classList.remove("show");
+}
+function limparErro(){ alertErr.classList.remove("show"); }
+
+// ── Token vem da querystring: ?token=xxx ──────────────────
+var token = new URLSearchParams(window.location.search).get("token");
+if(!token){
+  formArea.style.display = "none";
+  erro("Link inválido. Solicite uma nova redefinição de senha na tela de login.");
+}
+
+// ── Toggle ver senha ──────────────────────────────────────
+document.getElementById("toggleSenha").addEventListener("click", function(){
+  var icon = document.getElementById("eyeIcon");
+  var mostrar = inpSenha.type === "password";
+  inpSenha.type = mostrar ? "text" : "password";
+  icon.className = mostrar ? "bi bi-eye-slash" : "bi bi-eye";
+});
+
+// ── Feedback de força mínima em tempo real ────────────────
+inpSenha.addEventListener("input", function(){
+  var ok = inpSenha.value.length >= 8;
+  hintSenha.textContent = ok ? "Tamanho suficiente." : "Mínimo de 8 caracteres.";
+  hintSenha.className = ok ? "hint ok" : "hint";
+});
+
+// ── Envio ─────────────────────────────────────────────────
+btnReset.addEventListener("click", async function(){
+  limparErro();
+
+  var senha = inpSenha.value;
+  var conf  = inpConf.value;
+
+  if(senha.length < 8){ erro("A senha deve ter pelo menos 8 caracteres."); return; }
+  if(senha !== conf){ erro("As senhas não coincidem."); return; }
+
+  btnReset.disabled = true;
+  btnText.textContent = "Redefinindo...";
+  spinner.classList.add("show");
+
+  try{
+    var res = await fetch(API + "/auth/reset-password", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ token: token, novaSenha: senha })
+    });
+
+    var data = await res.json().catch(function(){ return {}; });
+
+    if(res.ok){
+      formArea.style.display = "none";
+      alertOk.classList.add("show");
+      setTimeout(function(){ window.location.href = "login.html"; }, 2500);
+      return;
+    }
+
+    if(res.status === 429){
+      erro("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+    }else{
+      erro(data.message || "Token inválido ou expirado. Solicite um novo link.");
+    }
+  }catch(err){
+    erro("Não foi possível conectar ao servidor. Tente novamente.");
+  }finally{
+    btnReset.disabled = false;
+    btnText.textContent = "Redefinir senha";
+    spinner.classList.remove("show");
+  }
+});
+
+// Enter envia o formulário
+[inpSenha, inpConf].forEach(function(el){
+  el.addEventListener("keydown", function(e){ if(e.key === "Enter") btnReset.click(); });
+});
+</script>
+</body>
+</html>
