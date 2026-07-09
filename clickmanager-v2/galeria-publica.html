@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Galeria do ensaio – Click Manager</title>
+<link rel="icon" href="/icons/favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+:root{
+  --bg:#fafaf8;--bg2:#f3f2ee;--surface:#fff;--border:#e8e5df;
+  --text:#1c1917;--text2:#78716c;--text3:#a8a29e;
+  --accent:#7c3aed;--accent2:#6d28d9;--accent-light:#f5f3ff;
+  --font-serif:'Instrument Serif',Georgia,serif;--font:'Outfit',sans-serif;
+  --r:14px;--r-sm:9px;--ease:.22s cubic-bezier(.4,0,.2,1);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.15);
+}
+@media (prefers-color-scheme: dark) {
+  :root{ --bg:#161412;--bg2:#1e1b18;--surface:#1e1b18;--border:#332e29;--text:#f5f3ef;--text2:#a8a29e;--text3:#78716c;--accent-light:#2a2140; }
+}
+:root[data-theme="dark"]{ --bg:#161412;--bg2:#1e1b18;--surface:#1e1b18;--border:#332e29;--text:#f5f3ef;--text2:#a8a29e;--text3:#78716c;--accent-light:#2a2140; }
+:root[data-theme="light"]{ --bg:#fafaf8;--bg2:#f3f2ee;--surface:#fff;--border:#e8e5df;--text:#1c1917;--text2:#78716c;--text3:#a8a29e;--accent-light:#f5f3ff; }
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface)}
+header .logo{width:32px;height:32px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.95rem}
+header span{font-weight:700;font-size:.95rem}
+
+main{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
+
+.hero{margin-bottom:32px}
+.hero .eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:8px}
+.hero h1{font-family:var(--font-serif);font-size:2.2rem;line-height:1.1;margin-bottom:10px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:16px;color:var(--text2);font-size:.85rem}
+.hero-meta span{display:flex;align-items:center;gap:6px}
+
+.state{text-align:center;padding:80px 20px;color:var(--text2)}
+.state i{font-size:2.6rem;display:block;margin-bottom:16px;color:var(--text3)}
+.state h2{font-family:var(--font-serif);font-size:1.5rem;color:var(--text);margin-bottom:8px}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.thumb{position:relative;border-radius:var(--r-sm);overflow:hidden;background:var(--bg2);border:1px solid var(--border);cursor:pointer;aspect-ratio:1;transition:box-shadow var(--ease)}
+.thumb:hover{box-shadow:var(--shadow-lg)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .dl{position:absolute;bottom:8px;right:8px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.9rem;opacity:0;transition:opacity var(--ease)}
+.thumb:hover .dl{opacity:1}
+
+.lightbox{position:fixed;inset:0;background:rgba(10,8,6,.92);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.lightbox.open{opacity:1;pointer-events:all}
+.lightbox img{max-width:90vw;max-height:82vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.lightbox-close,.lightbox-dl,.lightbox-prev,.lightbox-next{position:absolute;background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;transition:background .2s}
+.lightbox-close:hover,.lightbox-dl:hover,.lightbox-prev:hover,.lightbox-next:hover{background:rgba(255,255,255,.24)}
+.lightbox-close{top:20px;right:20px}
+.lightbox-dl{top:20px;right:76px}
+.lightbox-prev{left:20px;top:50%;transform:translateY(-50%)}
+.lightbox-next{right:20px;top:50%;transform:translateY(-50%)}
+
+.footer-note{margin-top:48px;text-align:center;color:var(--text3);font-size:.78rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><i class="bi bi-camera-fill"></i></div>
+  <span>Click Manager</span>
+</header>
+
+<main>
+  <div id="loadingState" class="state">
+    <div class="spinner"></div>
+    <p>Carregando galeria...</p>
+  </div>
+
+  <div id="errorState" class="state" style="display:none">
+    <i class="bi bi-link-45deg"></i>
+    <h2>Link inválido ou desativado</h2>
+    <p>Peça ao fotógrafo um novo link de acesso à galeria.</p>
+  </div>
+
+  <div id="content" style="display:none">
+    <div class="hero">
+      <div class="eyebrow" id="fotografoNome">—</div>
+      <h1 id="tituloEnsaio">—</h1>
+      <div class="hero-meta">
+        <span id="metaData"><i class="bi bi-calendar3"></i> —</span>
+        <span id="metaLocal" style="display:none"><i class="bi bi-geo-alt"></i> —</span>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="footer-note">Galeria entregue via Click Manager · clique numa foto para ampliar ou baixar</div>
+  </div>
+</main>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-prev" id="lbPrev"><i class="bi bi-chevron-left"></i></button>
+  <img id="lightboxImg" src="" alt=""/>
+  <button class="lightbox-next" id="lbNext"><i class="bi bi-chevron-right"></i></button>
+  <a class="lightbox-dl" id="lbDownload" download><i class="bi bi-download"></i></a>
+  <button class="lightbox-close" id="lbClose"><i class="bi bi-x-lg"></i></button>
+</div>
+
+<script>
+var API = "http://localhost:5000/api";
+var imagens = [];
+var indiceAtual = 0;
+
+function getToken() {
+  var params = new URLSearchParams(window.location.search);
+  return params.get("token") || "";
+}
+
+function mostrarErro() {
+  document.getElementById("loadingState").style.display = "none";
+  document.getElementById("errorState").style.display = "block";
+}
+
+function formatarData(iso) {
+  try {
+    var d = new Date(iso);
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  } catch (e) { return iso; }
+}
+
+function renderizar(dados) {
+  document.getElementById("loadingState").style.display = "none";
+  document.getElementById("content").style.display = "block";
+
+  document.title = dados.titulo + " – Click Manager";
+  document.getElementById("tituloEnsaio").textContent = dados.titulo || "Sua galeria";
+  document.getElementById("fotografoNome").textContent =
+    (dados.fotografo && dados.fotografo.nome) ? "Por " + dados.fotografo.nome : "Click Manager";
+  document.getElementById("metaData").innerHTML =
+    '<i class="bi bi-calendar3"></i> ' + formatarData(dados.dataHora);
+
+  if (dados.local) {
+    var localEl = document.getElementById("metaLocal");
+    localEl.style.display = "flex";
+    localEl.innerHTML = '<i class="bi bi-geo-alt"></i> ' + dados.local;
+  }
+
+  imagens = dados.imagens || [];
+  var grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  if (imagens.length === 0) {
+    grid.innerHTML = '<p style="color:var(--text2);grid-column:1/-1;text-align:center;padding:40px 0">' +
+      'O fotógrafo ainda não enviou fotos para esta galeria.</p>';
+    return;
+  }
+
+  imagens.forEach(function (img, i) {
+    var div = document.createElement("div");
+    div.className = "thumb";
+    div.innerHTML =
+      '<img src="' + img.url + '" alt="Foto ' + (i + 1) + '" loading="lazy"/>' +
+      '<a class="dl" href="' + img.url + '" download onclick="event.stopPropagation()"><i class="bi bi-download"></i></a>';
+    div.addEventListener("click", function () { abrirLightbox(i); });
+    grid.appendChild(div);
+  });
+}
+
+function abrirLightbox(i) {
+  indiceAtual = i;
+  atualizarLightbox();
+  document.getElementById("lightbox").classList.add("open");
+}
+function atualizarLightbox() {
+  var img = imagens[indiceAtual];
+  document.getElementById("lightboxImg").src = img.url;
+  document.getElementById("lbDownload").href = img.url;
+}
+document.getElementById("lbClose").addEventListener("click", function () {
+  document.getElementById("lightbox").classList.remove("open");
+});
+document.getElementById("lightbox").addEventListener("click", function (e) {
+  if (e.target.id === "lightbox") document.getElementById("lightbox").classList.remove("open");
+});
+document.getElementById("lbPrev").addEventListener("click", function () {
+  indiceAtual = (indiceAtual - 1 + imagens.length) % imagens.length;
+  atualizarLightbox();
+});
+document.getElementById("lbNext").addEventListener("click", function () {
+  indiceAtual = (indiceAtual + 1) % imagens.length;
+  atualizarLightbox();
+});
+document.addEventListener("keydown", function (e) {
+  if (!document.getElementById("lightbox").classList.contains("open")) return;
+  if (e.key === "Escape") document.getElementById("lightbox").classList.remove("open");
+  if (e.key === "ArrowLeft") document.getElementById("lbPrev").click();
+  if (e.key === "ArrowRight") document.getElementById("lbNext").click();
+});
+
+(function init() {
+  var token = getToken();
+  if (!token) { mostrarErro(); return; }
+
+  fetch(API + "/galeria-publica/" + encodeURIComponent(token))
+    .then(function (r) { if (!r.ok) throw new Error("not ok"); return r.json(); })
+    .then(renderizar)
+    .catch(mostrarErro);
+})();
+</script>
+</body>
+</html>

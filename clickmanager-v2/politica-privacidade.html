@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Política de Privacidade – Click Manager</title>
+<link rel="icon" href="/icons/favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+:root{
+  --bg:#fafaf8;--surface:#fff;--border:#e8e5df;--text:#1c1917;--text2:#78716c;--text3:#a8a29e;
+  --accent:#7c3aed;--font-serif:'Instrument Serif',Georgia,serif;--font:'Outfit',sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root{ --bg:#161412;--surface:#1e1b18;--border:#332e29;--text:#f5f3ef;--text2:#a8a29e;--text3:#78716c; }
+}
+:root[data-theme="dark"]{ --bg:#161412;--surface:#1e1b18;--border:#332e29;--text:#f5f3ef;--text2:#a8a29e;--text3:#78716c; }
+:root[data-theme="light"]{ --bg:#fafaf8;--surface:#fff;--border:#e8e5df;--text:#1c1917;--text2:#78716c;--text3:#a8a29e; }
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.7}
+header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
+header a.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700}
+header .logo{width:32px;height:32px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.95rem}
+header a.back{font-size:.85rem;color:var(--accent);text-decoration:none;font-weight:600}
+main{max-width:760px;margin:0 auto;padding:48px 24px 100px}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:10px}
+h1{font-family:var(--font-serif);font-size:2.4rem;margin-bottom:8px}
+.updated{color:var(--text3);font-size:.82rem;margin-bottom:40px}
+h2{font-family:var(--font-serif);font-size:1.4rem;margin:36px 0 12px}
+p, li{color:var(--text2);font-size:.94rem;margin-bottom:12px}
+ul{padding-left:20px;margin-bottom:12px}
+a{color:var(--accent)}
+strong{color:var(--text)}
+.note{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;font-size:.85rem;margin-top:40px;color:var(--text2)}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="index.html"><div class="logo"><i class="bi bi-camera-fill"></i></div>Click Manager</a>
+  <a class="back" href="index.html">← Voltar ao site</a>
+</header>
+<main>
+  <div class="eyebrow">Legal</div>
+  <h1>Política de Privacidade</h1>
+  <p class="updated">Última atualização: 9 de julho de 2026</p>
+
+  <p>Esta política explica quais dados o <strong>Click Manager</strong> coleta, para que usa e quais direitos você tem sobre eles, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).</p>
+
+  <h2>1. Quem somos</h2>
+  <p>O Click Manager é uma plataforma de gestão para fotógrafos autônomos, desenvolvida como projeto acadêmico (PIM III — UNIP, curso de Análise e Desenvolvimento de Sistemas). Para qualquer dúvida sobre esta política ou sobre seus dados, entre em contato pelo e-mail <a href="mailto:contato@clickmanager.com.br">contato@clickmanager.com.br</a>.</p>
+
+  <h2>2. Quais dados coletamos</h2>
+  <ul>
+    <li><strong>Dados de cadastro do fotógrafo:</strong> nome, e-mail, telefone, senha (armazenada com hash, nunca em texto puro), Instagram e biografia opcionais.</li>
+    <li><strong>Dados inseridos pelo fotógrafo sobre terceiros:</strong> nome, e-mail e telefone dos clientes/contratantes que ele cadastra na plataforma, além de dados dos ensaios, contratos e pagamentos.</li>
+    <li><strong>Imagens:</strong> fotos enviadas para portfólio público ou para a galeria de entrega de um ensaio.</li>
+    <li><strong>Dados técnicos:</strong> registros de autenticação (token JWT) e, quando aplicável, logs de acesso para fins de segurança.</li>
+  </ul>
+  <p>O fotógrafo é responsável por obter o consentimento adequado dos seus próprios clientes antes de cadastrar os dados deles na plataforma.</p>
+
+  <h2>3. Para que usamos os dados</h2>
+  <ul>
+    <li>Criar e autenticar sua conta;</li>
+    <li>Disponibilizar as funcionalidades do sistema (clientes, ensaios, contratos, pagamentos e galeria);</li>
+    <li>Enviar e-mails transacionais (redefinição de senha, contato);</li>
+    <li>Gerar o link público de entrega de galeria, quando você optar por criá-lo;</li>
+    <li>Cumprir obrigações legais e resolver disputas.</li>
+  </ul>
+  <p>Não vendemos nem compartilhamos seus dados com terceiros para fins de publicidade.</p>
+
+  <h2>4. Com quem compartilhamos</h2>
+  <p>Seus dados ficam hospedados em provedores de infraestrutura contratados para operar o serviço (banco de dados e servidor de aplicação). O envio de e-mails transacionais é feito através de um provedor de SMTP. Esses provedores têm acesso aos dados apenas na medida necessária para prestar o serviço contratado.</p>
+
+  <h2>5. Galeria e portfólio públicos</h2>
+  <p>Imagens de portfólio e os links públicos de galeria de entrega são, por natureza, acessíveis a quem tiver o link — não exigem login. Não inclua nessas imagens informações sensíveis que não devam ser vistas por terceiros. Você pode revogar um link de galeria a qualquer momento na tela "Galeria do Ensaio".</p>
+
+  <h2>6. Seus direitos (art. 18 da LGPD)</h2>
+  <p>Você pode, a qualquer momento:</p>
+  <ul>
+    <li><strong>Acessar e corrigir</strong> seus dados de cadastro em "Configurações";</li>
+    <li><strong>Excluir sua conta e todos os dados associados</strong> — clientes, ensaios, contratos, pagamentos, imagens e link de recuperação de senha — de forma definitiva e imediata, em "Configurações → Excluir conta";</li>
+    <li>Solicitar uma cópia dos seus dados ou esclarecer qualquer dúvida escrevendo para <a href="mailto:contato@clickmanager.com.br">contato@clickmanager.com.br</a>.</li>
+  </ul>
+  <p>A exclusão de conta é <strong>irreversível</strong>: uma vez confirmada, os dados não podem ser recuperados.</p>
+
+  <h2>7. Retenção de dados</h2>
+  <p>Mantemos seus dados enquanto sua conta estiver ativa. Ao excluir a conta, os registros são apagados imediatamente do banco de dados de produção.</p>
+
+  <h2>8. Segurança</h2>
+  <p>Senhas são armazenadas com hash (BCrypt), nunca em texto puro. O acesso à API é protegido por autenticação JWT, e cada fotógrafo só enxerga os próprios dados — nunca os de outro fotógrafo cadastrado na plataforma.</p>
+
+  <h2>9. Cookies e armazenamento local</h2>
+  <p>O Click Manager não usa cookies de rastreamento ou publicidade. O token de sessão (JWT) é guardado no <em>localStorage</em> do seu navegador, apenas para manter você conectado.</p>
+
+  <h2>10. Alterações nesta política</h2>
+  <p>Podemos atualizar esta política eventualmente. A data no topo desta página indica a versão mais recente.</p>
+
+  <div class="note">
+    Este documento foi escrito para um projeto acadêmico/MVP em estágio inicial. Antes de operar comercialmente, revise-o com um profissional jurídico e complete os dados de identificação da empresa (razão social, CNPJ, endereço) e do encarregado de dados (DPO).
+  </div>
+</main>
+</body>
+</html>

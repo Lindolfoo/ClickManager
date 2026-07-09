@@ -40,3 +40,6 @@ public record ForgotPasswordRequest(string Email);
 
 /// <summary>Redefine a senha usando o token recebido por e-mail.</summary>
 public record ResetPasswordRequest(string Token, string NovaSenha);
+
+/// <summary>Confirma a senha atual antes de apagar a conta e todos os dados (LGPD).</summary>
+public record DeleteAccountRequest(string Senha);

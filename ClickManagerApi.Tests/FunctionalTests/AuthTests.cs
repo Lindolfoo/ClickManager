@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClickManagerApi.Tests.Helpers;
@@ -9,6 +10,12 @@ namespace ClickManagerApi.Tests.FunctionalTests;
 public class AuthTests(WebFactory factory) : IClassFixture<WebFactory>
 {
     private static readonly JsonSerializerOptions J = AuthHelper.JsonOpts;
+
+    private static Task<HttpResponseMessage> DeleteWithBodyAsync(HttpClient client, string url, object body)
+    {
+        var req = new HttpRequestMessage(HttpMethod.Delete, url) { Content = JsonContent.Create(body) };
+        return client.SendAsync(req);
+    }
 
     [Fact]
     public async Task Register_WithValidData_Returns201AndToken()
@@ -111,5 +118,79 @@ public class AuthTests(WebFactory factory) : IClassFixture<WebFactory>
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
         var body = await resp.Content.ReadFromJsonAsync<JsonElement>(J);
         Assert.Equal("pro", body.GetProperty("fotografo").GetProperty("planoAtivo").GetString());
+    }
+
+    // ── Exclusão de conta (LGPD) ────────────────────────────────
+
+    [Fact]
+    public async Task DeleteAccount_WithoutAuth_Returns401()
+    {
+        var client = factory.CreateClient();
+        var resp = await DeleteWithBodyAsync(client, "/api/auth/me", new { senha = "qualquer" });
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_WrongPassword_Returns401()
+    {
+        var email  = $"delwrong_{Guid.NewGuid():N}@test.com";
+        var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/api/auth/register", new { nome = "Del Wrong", email, senha = "SenhaCerta123" });
+        var login = await (await client.PostAsJsonAsync("/api/auth/login", new { email, senha = "SenhaCerta123" }))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", login.GetProperty("token").GetString());
+
+        var resp = await DeleteWithBodyAsync(client, "/api/auth/me", new { senha = "SenhaErrada999" });
+        Assert.Equal(HttpStatusCode.Unauthorized, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_CorrectPassword_Returns204EApagaConta()
+    {
+        var email  = $"delok_{Guid.NewGuid():N}@test.com";
+        var senha  = "SenhaCerta123";
+        var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/api/auth/register", new { nome = "Del Ok", email, senha });
+        var login = await (await client.PostAsJsonAsync("/api/auth/login", new { email, senha }))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", login.GetProperty("token").GetString());
+
+        var resp = await DeleteWithBodyAsync(client, "/api/auth/me", new { senha });
+        Assert.Equal(HttpStatusCode.NoContent, resp.StatusCode);
+
+        // A conta não existe mais: login com as mesmas credenciais falha
+        var loginDepois = await factory.CreateClient().PostAsJsonAsync("/api/auth/login", new { email, senha });
+        Assert.Equal(HttpStatusCode.Unauthorized, loginDepois.StatusCode);
+
+        // E-mail liberado: dá pra registrar de novo com o mesmo e-mail
+        var registroNovo = await factory.CreateClient().PostAsJsonAsync("/api/auth/register", new { nome = "Outra Pessoa", email, senha });
+        Assert.Equal(HttpStatusCode.Created, registroNovo.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_ApagaClientesEnsaiosEDadosRelacionados()
+    {
+        var email  = $"delcascade_{Guid.NewGuid():N}@test.com";
+        var senha  = "SenhaCerta123";
+        var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/api/auth/register", new { nome = "Del Cascade", email, senha });
+        var login = await (await client.PostAsJsonAsync("/api/auth/login", new { email, senha }))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", login.GetProperty("token").GetString());
+
+        var cResp = await client.PostAsJsonAsync("/api/clientes", new { nome = "Cliente Del", email = "cd@test.com", status = "Ativo" });
+        var cid = (await cResp.Content.ReadFromJsonAsync<JsonElement>(J)).GetProperty("id").GetInt32();
+        await client.PostAsJsonAsync("/api/ensaios", new
+        {
+            clienteId = cid, titulo = "Ensaio Del", dataHora = "2026-09-01T10:00:00", local = "X", valor = 100
+        });
+
+        // Se a exclusão não der conta do FK NoAction entre Ensaio→Fotografo/Cliente,
+        // isso falharia com erro de integridade referencial em vez de 204.
+        var resp = await DeleteWithBodyAsync(client, "/api/auth/me", new { senha });
+        Assert.Equal(HttpStatusCode.NoContent, resp.StatusCode);
     }
 }

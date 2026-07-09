@@ -155,4 +155,19 @@ public class EnsaiosTests(WebFactory factory) : IClassFixture<WebFactory>
 
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
     }
+
+    // Regression: um fotógrafo não pode criar ensaio apontando pro cliente de outro (IDOR)
+    [Fact]
+    public async Task Create_PointingToOtherTenantsCliente_Returns404()
+    {
+        var (_, cidA) = await SetupAsync();
+
+        var (clientB, _, _) = await AuthHelper.CreateAuth(factory);
+        var resp = await clientB.PostAsJsonAsync("/api/ensaios", new
+        {
+            clienteId = cidA, titulo = "Cross Cliente", dataHora = "2026-12-15T10:00:00", local = "W", valor = 350
+        });
+
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+    }
 }

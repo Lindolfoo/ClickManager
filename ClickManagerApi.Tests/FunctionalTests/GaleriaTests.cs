@@ -180,4 +180,132 @@ public class GaleriaTests(WebFactory factory) : IClassFixture<WebFactory>
         var resp = await client.DeleteAsync("/api/galeria/999999");
         Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
     }
+
+    // ── Link público de entrega ────────────────────────────────
+
+    [Fact]
+    public async Task GetLink_SemLinkGerado_RetornaInativo()
+    {
+        var (client, ensaioId) = await SetupAsync();
+        var resp = await client.GetAsync($"/api/galeria/{ensaioId}/link");
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+
+        var body = await resp.Content.ReadFromJsonAsync<JsonElement>(J);
+        Assert.False(body.GetProperty("ativo").GetBoolean());
+    }
+
+    [Fact]
+    public async Task CriarLink_Returns200ComUrl()
+    {
+        var (client, ensaioId) = await SetupAsync();
+        var resp = await client.PostAsync($"/api/galeria/{ensaioId}/link", null);
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+
+        var body = await resp.Content.ReadFromJsonAsync<JsonElement>(J);
+        Assert.True(body.GetProperty("ativo").GetBoolean());
+        Assert.Contains("galeria-publica.html?token=", body.GetProperty("url").GetString());
+    }
+
+    [Fact]
+    public async Task CriarLink_OtherUsersEnsaio_Returns404()
+    {
+        var (_, ensaioIdA) = await SetupAsync();
+        var (clientB, _, _) = await AuthHelper.CreateAuth(factory);
+
+        var resp = await clientB.PostAsync($"/api/galeria/{ensaioIdA}/link", null);
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task RevogarLink_DesativaOLink()
+    {
+        var (client, ensaioId) = await SetupAsync();
+        await client.PostAsync($"/api/galeria/{ensaioId}/link", null);
+
+        var resp = await client.DeleteAsync($"/api/galeria/{ensaioId}/link");
+        Assert.Equal(HttpStatusCode.NoContent, resp.StatusCode);
+
+        var status = await (await client.GetAsync($"/api/galeria/{ensaioId}/link"))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        Assert.False(status.GetProperty("ativo").GetBoolean());
+    }
+
+    [Fact]
+    public async Task LinkPublico_AcessoAnonimoComImagens_Returns200ComGaleria()
+    {
+        var (client, ensaioId) = await SetupAsync();
+
+        var form = new MultipartFormDataContent();
+        form.Add(JpegContent(), "arquivos", "publica.jpg");
+        await client.PostAsync($"/api/galeria/{ensaioId}", form);
+
+        var linkResp = await (await client.PostAsync($"/api/galeria/{ensaioId}/link", null))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        var url   = linkResp.GetProperty("url").GetString()!;
+        var token = url.Split("token=")[1];
+
+        var anon = factory.CreateClient();
+        var resp = await anon.GetAsync($"/api/galeria-publica/{token}");
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+
+        var body = await resp.Content.ReadFromJsonAsync<JsonElement>(J);
+        Assert.Equal("Galeria Test", body.GetProperty("titulo").GetString());
+        Assert.Equal(1, body.GetProperty("imagens").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task LinkPublico_NaoExpoeCamposSensiveis()
+    {
+        var (client, ensaioId) = await SetupAsync();
+        var linkResp = await (await client.PostAsync($"/api/galeria/{ensaioId}/link", null))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        var token = linkResp.GetProperty("url").GetString()!.Split("token=")[1];
+
+        var anon = factory.CreateClient();
+        var body = await (await anon.GetAsync($"/api/galeria-publica/{token}"))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+
+        Assert.False(body.TryGetProperty("valor", out _));
+        Assert.False(body.TryGetProperty("observacoes", out _));
+        Assert.False(body.TryGetProperty("clienteId", out _));
+        Assert.False(body.TryGetProperty("fotografoId", out _));
+    }
+
+    [Fact]
+    public async Task LinkPublico_TokenInvalido_Returns404()
+    {
+        var anon = factory.CreateClient();
+        var resp = await anon.GetAsync("/api/galeria-publica/token-que-nao-existe");
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task LinkPublico_AposRevogar_Returns404()
+    {
+        var (client, ensaioId) = await SetupAsync();
+        var linkResp = await (await client.PostAsync($"/api/galeria/{ensaioId}/link", null))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        var token = linkResp.GetProperty("url").GetString()!.Split("token=")[1];
+
+        await client.DeleteAsync($"/api/galeria/{ensaioId}/link");
+
+        var anon = factory.CreateClient();
+        var resp = await anon.GetAsync($"/api/galeria-publica/{token}");
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+    }
+
+    [Fact]
+    public async Task CriarLink_Regenerar_InvalidaTokenAnterior()
+    {
+        var (client, ensaioId) = await SetupAsync();
+        var primeiro = await (await client.PostAsync($"/api/galeria/{ensaioId}/link", null))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        var tokenAntigo = primeiro.GetProperty("url").GetString()!.Split("token=")[1];
+
+        await client.PostAsync($"/api/galeria/{ensaioId}/link?regenerar=true", null);
+
+        var anon = factory.CreateClient();
+        var resp = await anon.GetAsync($"/api/galeria-publica/{tokenAntigo}");
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+    }
 }

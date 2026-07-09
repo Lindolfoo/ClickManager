@@ -1743,15 +1743,23 @@ body {
       <div class="page-eyebrow">Entrega</div>
       <div class="page-header-row">
         <h1 class="page-title" style="margin:0">Galeria do Ensaio</h1>
-        <button class="btn btn-primary" id="btnEnviarImagens"><i class="bi bi-upload"></i> Enviar imagens</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost" id="btnCompartilharGaleria"><i class="bi bi-share"></i> Compartilhar</button>
+          <button class="btn btn-primary" id="btnEnviarImagens"><i class="bi bi-upload"></i> Enviar imagens</button>
+        </div>
       </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <label class="form-label" for="galeriaEnsaioAtual">Ensaio</label>
+        <select class="form-select" id="galeriaEnsaioAtual"><option value="">Selecione um ensaio</option></select>
+      </div>
+
       <div class="card" id="galeriaEmptyCard" style="text-align:center;padding:48px">
         <i class="bi bi-images" style="font-size:3rem;color:var(--text2);margin-bottom:16px;display:block"></i>
         <div class="card-title" id="galeriaEmptyTitle">Nenhuma imagem ainda</div>
-        <p id="galeriaEmptyText" style="color:var(--text2);font-size:.875rem;margin-bottom:20px">Envie suas fotos para começar a montar a vitrine pública do fotógrafo.</p>
+        <p id="galeriaEmptyText" style="color:var(--text2);font-size:.875rem;margin-bottom:20px">Selecione um ensaio acima e envie as fotos para montar a galeria de entrega ao cliente.</p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <button class="btn btn-primary" id="btnFazerUpload"><i class="bi bi-upload"></i> Fazer upload</button>
-          <button class="btn btn-ghost" id="btnMarcarEnsaio" data-goto="ensaios" style="display:none"><i class="bi bi-calendar-plus"></i> Marcar ensaio</button>
         </div>
       </div>
       <div id="galeriaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;display:none"></div>
@@ -1932,6 +1940,18 @@ body {
           </div>
         </div>
       </div>
+
+      <div class="card" style="border-color:var(--danger);margin-top:20px">
+        <div class="card-label" style="color:var(--danger)">Zona de risco</div>
+        <div class="card-title" style="margin-bottom:8px">Excluir conta</div>
+        <p style="font-size:.875rem;color:var(--text2);margin-bottom:16px">
+          Remove permanentemente sua conta, clientes, ensaios, contratos, pagamentos e imagens. Essa ação não pode ser desfeita.
+          Veja como tratamos seus dados na <a href="politica-privacidade.html" target="_blank">Política de Privacidade</a>.
+        </p>
+        <button class="btn btn-ghost" id="btnAbrirExcluirConta" style="color:var(--danger);border-color:var(--danger)">
+          <i class="bi bi-trash"></i> Excluir minha conta
+        </button>
+      </div>
     </div>
 
   </div><!-- /main-content -->
@@ -2106,6 +2126,53 @@ body {
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-ghost" data-modal-close="modalGaleriaUpload">Cancelar</button>
       <button class="btn btn-primary" id="btnEnviarGaleriaOk">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Compartilhar Galeria -->
+<div class="modal-overlay" id="modalGaleriaLink">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Compartilhar galeria</div>
+      <button class="btn-icon" data-modal-close="modalGaleriaLink"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <p style="font-size:.82rem;color:var(--text2);margin-bottom:16px">
+      Qualquer pessoa com este link consegue ver e baixar as fotos do ensaio, sem precisar de login.
+    </p>
+    <div class="form-group" id="galeriaLinkAtivoGroup" style="display:none">
+      <label class="form-label">Link público</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="form-control" id="galeriaLinkUrl" readonly/>
+        <button class="btn btn-ghost" id="btnCopiarLinkGaleria"><i class="bi bi-clipboard"></i></button>
+      </div>
+    </div>
+    <p id="galeriaLinkInativoMsg" style="font-size:.82rem;color:var(--text2);margin-bottom:16px">Este ensaio ainda não tem um link ativo.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost" id="btnRevogarLinkGaleria" style="display:none;color:var(--danger)">Revogar link</button>
+      <button class="btn btn-primary" id="btnGerarLinkGaleria">Gerar link</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Excluir Conta (LGPD) -->
+<div class="modal-overlay" id="modalExcluirConta">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--danger)">Excluir conta</div>
+      <button class="btn-icon" data-modal-close="modalExcluirConta"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <p style="font-size:.85rem;color:var(--text2);margin-bottom:16px">
+      Esta ação apaga <strong>permanentemente</strong> sua conta e todos os clientes, ensaios, contratos, pagamentos e imagens associados. Não é possível desfazer.
+    </p>
+    <div class="form-group">
+      <label class="form-label">Confirme sua senha para continuar</label>
+      <input type="password" class="form-control" id="excluirContaSenha" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <div id="excluirContaErro" style="display:none;color:var(--danger);font-size:.82rem;margin-bottom:8px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost" data-modal-close="modalExcluirConta">Cancelar</button>
+      <button class="btn" id="btnConfirmarExcluirConta" style="background:var(--danger);color:#fff">Excluir permanentemente</button>
     </div>
   </div>
 </div>

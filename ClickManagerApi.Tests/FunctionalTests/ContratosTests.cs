@@ -115,4 +115,19 @@ public class ContratosTests(WebFactory factory) : IClassFixture<WebFactory>
         var resp = await client.PatchAsync("/api/contratos/999999/assinar", null);
         Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
     }
+
+    // Regression: um fotógrafo não pode assinar o contrato de outro (IDOR)
+    [Fact]
+    public async Task Assinar_OtherTenantsContrato_Returns404()
+    {
+        var (clientA, _) = await SetupAsync();
+        var list = await (await clientA.GetAsync("/api/contratos"))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        var contratoIdDeA = list.EnumerateArray().First().GetProperty("id").GetInt32();
+
+        var (clientB, _, _) = await AuthHelper.CreateAuth(factory);
+        var resp = await clientB.PatchAsync($"/api/contratos/{contratoIdDeA}/assinar", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+    }
 }

@@ -41,6 +41,11 @@ public class PagamentosController : ControllerBase
     public async Task<IActionResult> Create([FromBody] Pagamento pagamento)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var ensaioValido = await _db.Ensaios
+            .AnyAsync(e => e.Id == pagamento.EnsaioId && e.FotografoId == FotografoId);
+        if (!ensaioValido) return NotFound(new { message = "Ensaio não encontrado." });
+
         pagamento.CriadoEm = DateTime.UtcNow;
         _db.Pagamentos.Add(pagamento);
         await _db.SaveChangesAsync();
@@ -51,7 +56,10 @@ public class PagamentosController : ControllerBase
     [HttpPatch("{id}/confirmar")]
     public async Task<IActionResult> Confirmar(int id)
     {
-        var p = await _db.Pagamentos.FindAsync(id);
+        var fid = FotografoId;
+        var p = await _db.Pagamentos
+            .Include(p => p.Ensaio)
+            .FirstOrDefaultAsync(p => p.Id == id && p.Ensaio!.FotografoId == fid);
         if (p is null) return NotFound();
         p.Status        = "Pago";
         p.DataPagamento = DateTime.UtcNow;

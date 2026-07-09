@@ -130,4 +130,36 @@ public class PagamentosTests(WebFactory factory) : IClassFixture<WebFactory>
         var resp = await client.PatchAsync("/api/pagamentos/999999/confirmar", null);
         Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
     }
+
+    // Regression: um fotógrafo não pode confirmar o pagamento de outro (IDOR)
+    [Fact]
+    public async Task Confirmar_OtherTenantsPagamento_Returns404()
+    {
+        var (clientA, ensaioIdA) = await SetupAsync();
+        var createResp = await clientA.PostAsJsonAsync("/api/pagamentos", new
+        {
+            ensaioId = ensaioIdA, valor = 500m, tipo = "Total", metodo = "Pix", status = "Pendente"
+        });
+        var pagamentoIdDeA = (await createResp.Content.ReadFromJsonAsync<JsonElement>(J)).GetProperty("id").GetInt32();
+
+        var (clientB, _, _) = await AuthHelper.CreateAuth(factory);
+        var resp = await clientB.PatchAsync($"/api/pagamentos/{pagamentoIdDeA}/confirmar", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+    }
+
+    // Regression: um fotógrafo não pode criar pagamento apontando pro ensaio de outro (IDOR)
+    [Fact]
+    public async Task Create_PointingToOtherTenantsEnsaio_Returns404()
+    {
+        var (_, ensaioIdA) = await SetupAsync();
+
+        var (clientB, _, _) = await AuthHelper.CreateAuth(factory);
+        var resp = await clientB.PostAsJsonAsync("/api/pagamentos", new
+        {
+            ensaioId = ensaioIdA, valor = 999m, tipo = "Total", metodo = "Pix", status = "Pago"
+        });
+
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+    }
 }

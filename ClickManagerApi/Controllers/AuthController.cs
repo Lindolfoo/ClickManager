@@ -20,6 +20,7 @@ public class AuthController : ControllerBase
     private readonly ApplicationDbContext     _db;
     private readonly IAuthService             _auth;
     private readonly IEmailService            _email;
+    private readonly IFileUploadService       _upload;
     private readonly IConfiguration           _config;
     private readonly ILogger<AuthController>  _logger;
 
@@ -27,12 +28,14 @@ public class AuthController : ControllerBase
         ApplicationDbContext    db,
         IAuthService            auth,
         IEmailService           email,
+        IFileUploadService      upload,
         IConfiguration          config,
         ILogger<AuthController> logger)
     {
         _db     = db;
         _auth   = auth;
         _email  = email;
+        _upload = upload;
         _config = config;
         _logger = logger;
     }
@@ -219,5 +222,59 @@ public class AuthController : ControllerBase
 
         await _db.SaveChangesAsync();
         return Ok(BuildDto(fotografo));
+    }
+
+    // DELETE /api/auth/me — exclusão de conta e de todos os dados (direito ao
+    // esquecimento, LGPD art. 18). Some é irreversível: exige a senha atual.
+    [HttpDelete("me")]
+    [Authorize]
+    public async Task<IActionResult> DeleteAccount([FromBody] DeleteAccountRequest req)
+    {
+        var fid = FotografoId;
+        var fotografo = await _db.Fotografos.FindAsync(fid);
+        if (fotografo is null) return NotFound();
+
+        if (!BCrypt.Net.BCrypt.Verify(req.Senha, fotografo.SenhaHash))
+            return Unauthorized(new { message = "Senha incorreta." });
+
+        // Carrega tudo explicitamente e remove numa única transação: o
+        // change tracker do EF ordena os DELETEs pelo grafo de dependências
+        // (Pagamentos/Contratos/Imagens antes de Ensaios, Ensaios antes de
+        // Clientes/Fotografo) — funciona tanto no Postgres real quanto no
+        // provider InMemory dos testes, ao contrário de ExecuteDeleteAsync
+        // (que o InMemory não suporta) ou de contar só com o cascade do
+        // banco (FotografoId/ClienteId em Ensaio são NoAction).
+        var ensaios    = await _db.Ensaios.Where(e => e.FotografoId == fid).ToListAsync();
+        var ensaioIds  = ensaios.Select(e => e.Id).ToList();
+
+        var contratos         = await _db.Contratos.Where(c => ensaioIds.Contains(c.EnsaioId)).ToListAsync();
+        var pagamentos        = await _db.Pagamentos.Where(p => ensaioIds.Contains(p.EnsaioId)).ToListAsync();
+        var imagensGaleria    = await _db.ImagensGaleria.Where(i => ensaioIds.Contains(i.EnsaioId)).ToListAsync();
+        var clientes          = await _db.Clientes.Where(c => c.FotografoId == fid).ToListAsync();
+        var disponibilidades  = await _db.Disponibilidades.Where(d => d.FotografoId == fid).ToListAsync();
+        var imagensPortfolio  = await _db.ImagensPortfolio.Where(i => i.FotografoId == fid).ToListAsync();
+        var tokensRecuperacao = await _db.TokensRecuperacaoSenha.Where(t => t.FotografoId == fid).ToListAsync();
+
+        // URLs dos arquivos físicos: o banco só apaga as linhas, não os arquivos em disco.
+        var urlsArquivos = imagensGaleria.Select(i => i.Url)
+            .Concat(imagensPortfolio.Select(i => i.Url))
+            .ToList();
+
+        _db.Pagamentos.RemoveRange(pagamentos);
+        _db.Contratos.RemoveRange(contratos);
+        _db.ImagensGaleria.RemoveRange(imagensGaleria);
+        _db.Ensaios.RemoveRange(ensaios);
+        _db.Clientes.RemoveRange(clientes);
+        _db.Disponibilidades.RemoveRange(disponibilidades);
+        _db.ImagensPortfolio.RemoveRange(imagensPortfolio);
+        _db.TokensRecuperacaoSenha.RemoveRange(tokensRecuperacao);
+        _db.Fotografos.Remove(fotografo);
+
+        await _db.SaveChangesAsync();
+
+        foreach (var url in urlsArquivos) _upload.Delete(url);
+
+        _logger.LogInformation("Conta excluída (LGPD) pelo próprio fotógrafo {Id}", fid);
+        return NoContent();
     }
 }

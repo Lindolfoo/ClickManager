@@ -109,6 +109,17 @@ public class Ensaio
     [MaxLength(500)]
     public string? Observacoes  { get; set; }
 
+    /// <summary>
+    /// Token opaco (não hasheado) do link público de entrega da galeria ao cliente.
+    /// Diferente do token de recuperação de senha, este precisa ser recuperável
+    /// (o fotógrafo copia o mesmo link várias vezes), então é guardado em claro —
+    /// mesmo modelo de confiança já usado para as URLs de ImagemGaleria/Portfolio,
+    /// que também são servidas sem autenticação via wwwroot/uploads.
+    /// </summary>
+    [MaxLength(64)]
+    public string? LinkGaleriaToken { get; set; }
+    public bool    LinkGaleriaAtivo { get; set; }
+
     public DateTime CriadoEm     { get; set; } = DateTime.UtcNow;
     public DateTime AtualizadoEm { get; set; } = DateTime.UtcNow;
 

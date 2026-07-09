@@ -99,6 +99,7 @@ public class ApplicationDbContext : DbContext
 
             e.HasIndex(en => en.DataHora);
             e.HasIndex(en => en.FotografoId);
+            e.HasIndex(en => en.LinkGaleriaToken).IsUnique();
         });
 
         // ── Contrato ─────────────────────────────────────────

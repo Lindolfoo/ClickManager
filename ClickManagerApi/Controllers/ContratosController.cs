@@ -78,7 +78,10 @@ public class ContratosController : ControllerBase
     [HttpPatch("{id}/assinar")]
     public async Task<IActionResult> Assinar(int id)
     {
-        var c = await _db.Contratos.FindAsync(id);
+        var fid = FotografoId;
+        var c = await _db.Contratos
+            .Include(c => c.Ensaio)
+            .FirstOrDefaultAsync(c => c.Id == id && c.Ensaio!.FotografoId == fid);
         if (c is null) return NotFound();
         c.Status         = "Assinado";
         c.DataAssinatura = DateTime.UtcNow;

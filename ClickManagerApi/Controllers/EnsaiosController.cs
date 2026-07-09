@@ -66,7 +66,13 @@ public class EnsaiosController : ControllerBase
     public async Task<IActionResult> Create([FromBody] Ensaio ensaio)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        ensaio.FotografoId   = FotografoId;
+
+        var fid = FotografoId;
+        var clienteValido = await _db.Clientes
+            .AnyAsync(c => c.Id == ensaio.ClienteId && c.FotografoId == fid);
+        if (!clienteValido) return NotFound(new { message = "Cliente não encontrado." });
+
+        ensaio.FotografoId   = fid;
         ensaio.CriadoEm     = DateTime.UtcNow;
         ensaio.AtualizadoEm = DateTime.UtcNow;
 

@@ -566,7 +566,272 @@ window.showToast = function(msg, type) {
 })();
 
 /* ============================================================
-   11. AJAX TICKER (dica do dia na landing)
+   11. GALERIA DO ENSAIO — upload, grid e link público de entrega
+   ============================================================ */
+(function initGaleria() {
+  var ensaioSelecionado = null;
+  var arquivosSelecionados = [];
+
+  function authHeaders(extra) {
+    var token = localStorage.getItem("cm-token");
+    var h = token ? { "Authorization": "Bearer " + token } : {};
+    if (extra) for (var k in extra) h[k] = extra[k];
+    return h;
+  }
+
+  document.addEventListener("pagechange", function (e) {
+    if (e.detail.page !== "galeria") return;
+    carregarEnsaiosNoSeletor();
+  });
+
+  function carregarEnsaiosNoSeletor() {
+    fetch(API + "/ensaios", { headers: authHeaders() })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var lista = Array.isArray(data) ? data : [];
+        var seletorTopo = document.getElementById("galeriaEnsaioAtual");
+        var seletorModal = document.getElementById("galeriaEnsaioId");
+        [seletorTopo, seletorModal].forEach(function (sel) {
+          if (!sel) return;
+          var valorAtual = sel.value;
+          sel.innerHTML = '<option value="">' +
+            (sel === seletorTopo ? "Selecione um ensaio" : "Selecione o ensaio") + '</option>';
+          lista.forEach(function (en) {
+            var op = document.createElement("option");
+            op.value = en.id;
+            op.textContent = en.titulo + " — " + (en.dataHora || "").toString().substring(0, 10);
+            sel.appendChild(op);
+          });
+          if (valorAtual) sel.value = valorAtual;
+        });
+      })
+      .catch(function () { /* API offline: seletor fica vazio */ });
+  }
+
+  document.addEventListener("change", function (e) {
+    if (e.target.id !== "galeriaEnsaioAtual") return;
+    ensaioSelecionado = e.target.value || null;
+    carregarGaleria();
+  });
+
+  function carregarGaleria() {
+    var empty = document.getElementById("galeriaEmptyCard");
+    var grid  = document.getElementById("galeriaGrid");
+    if (!ensaioSelecionado) {
+      empty.style.display = "block";
+      document.getElementById("galeriaEmptyTitle").textContent = "Nenhum ensaio selecionado";
+      document.getElementById("galeriaEmptyText").textContent = "Escolha um ensaio acima para ver ou enviar fotos.";
+      grid.style.display = "none";
+      return;
+    }
+
+    fetch(API + "/galeria/" + ensaioSelecionado, { headers: authHeaders() })
+      .then(function (r) { return r.json(); })
+      .then(function (imagens) {
+        renderGaleriaGrid(Array.isArray(imagens) ? imagens : []);
+      })
+      .catch(function () { renderGaleriaGrid([]); });
+  }
+
+  function renderGaleriaGrid(imagens) {
+    var empty = document.getElementById("galeriaEmptyCard");
+    var grid  = document.getElementById("galeriaGrid");
+
+    if (imagens.length === 0) {
+      empty.style.display = "block";
+      document.getElementById("galeriaEmptyTitle").textContent = "Nenhuma imagem ainda";
+      document.getElementById("galeriaEmptyText").textContent = "Envie as fotos deste ensaio para montar a galeria de entrega ao cliente.";
+      grid.style.display = "none";
+      return;
+    }
+
+    empty.style.display = "none";
+    grid.style.display = "grid";
+    grid.innerHTML = "";
+    imagens.forEach(function (img) {
+      var url = img.url || img.Url;
+      var id  = img.id  || img.Id;
+      var div = document.createElement("div");
+      div.style.cssText = "position:relative;border-radius:var(--radius-sm);overflow:hidden;aspect-ratio:1;border:1px solid var(--border)";
+      div.innerHTML =
+        '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;display:block" alt=""/>' +
+        '<button class="btn-icon" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none" data-del-img="' + id + '"><i class="bi bi-trash"></i></button>';
+      grid.appendChild(div);
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    var delBtn = e.target.closest("[data-del-img]");
+    if (!delBtn) return;
+    var id = delBtn.getAttribute("data-del-img");
+    fetch(API + "/galeria/" + id, { method: "DELETE", headers: authHeaders() })
+      .then(function () { showToast("Imagem removida.", "success"); carregarGaleria(); })
+      .catch(function () { showToast("Erro ao remover imagem.", "error"); });
+  });
+
+  // ── Upload ────────────────────────────────────────────────
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnEnviarImagens") && !e.target.closest("#btnFazerUpload")) return;
+    var modalSel = document.getElementById("galeriaEnsaioId");
+    if (ensaioSelecionado) modalSel.value = ensaioSelecionado;
+    arquivosSelecionados = [];
+    document.getElementById("galeriaPreview").innerHTML = "";
+    openModal("modalGaleriaUpload");
+  });
+
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("#galeriaDropArea")) document.getElementById("galeriaFileInput").click();
+  });
+
+  document.addEventListener("change", function (e) {
+    if (e.target.id !== "galeriaFileInput") return;
+    arquivosSelecionados = Array.prototype.slice.call(e.target.files);
+    var preview = document.getElementById("galeriaPreview");
+    preview.innerHTML = "";
+    arquivosSelecionados.forEach(function (file) {
+      var img = document.createElement("img");
+      img.style.cssText = "width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)";
+      img.src = URL.createObjectURL(file);
+      preview.appendChild(img);
+    });
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnEnviarGaleriaOk")) return;
+    var ensaioId = document.getElementById("galeriaEnsaioId").value;
+    if (!ensaioId) { showToast("Selecione o ensaio.", "error"); return; }
+    if (arquivosSelecionados.length === 0) { showToast("Selecione ao menos uma imagem.", "error"); return; }
+
+    var formData = new FormData();
+    arquivosSelecionados.forEach(function (file) { formData.append("arquivos", file); });
+
+    var btn = e.target.closest("#btnEnviarGaleriaOk");
+    btn.disabled = true;
+    fetch(API + "/galeria/" + ensaioId, {
+      method: "POST",
+      headers: authHeaders(),
+      body: formData
+    })
+    .then(function (r) { if (!r.ok) throw new Error("upload falhou"); return r.json(); })
+    .then(function () {
+      closeModal("modalGaleriaUpload");
+      showToast("✅ Imagens enviadas!", "success");
+      if (ensaioId === ensaioSelecionado) carregarGaleria();
+    })
+    .catch(function () { showToast("Erro ao enviar imagens.", "error"); })
+    .finally(function () { btn.disabled = false; });
+  });
+
+  // ── Compartilhar / link público ───────────────────────────
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnCompartilharGaleria")) return;
+    if (!ensaioSelecionado) { showToast("Selecione um ensaio primeiro.", "error"); return; }
+    carregarStatusLink();
+    openModal("modalGaleriaLink");
+  });
+
+  function carregarStatusLink() {
+    fetch(API + "/galeria/" + ensaioSelecionado + "/link", { headers: authHeaders() })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { atualizarModalLink(data.ativo, data.url); })
+      .catch(function () { atualizarModalLink(false, null); });
+  }
+
+  function atualizarModalLink(ativo, url) {
+    document.getElementById("galeriaLinkAtivoGroup").style.display   = ativo ? "block" : "none";
+    document.getElementById("galeriaLinkInativoMsg").style.display   = ativo ? "none"  : "block";
+    document.getElementById("btnRevogarLinkGaleria").style.display   = ativo ? "inline-flex" : "none";
+    document.getElementById("btnGerarLinkGaleria").textContent       = ativo ? "Gerar novo link" : "Gerar link";
+    if (ativo) document.getElementById("galeriaLinkUrl").value = url;
+  }
+
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnGerarLinkGaleria")) return;
+    fetch(API + "/galeria/" + ensaioSelecionado + "/link?regenerar=true", { method: "POST", headers: authHeaders() })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        atualizarModalLink(true, data.url);
+        showToast("✅ Link gerado!", "success");
+      })
+      .catch(function () { showToast("Erro ao gerar link.", "error"); });
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnRevogarLinkGaleria")) return;
+    fetch(API + "/galeria/" + ensaioSelecionado + "/link", { method: "DELETE", headers: authHeaders() })
+      .then(function () {
+        atualizarModalLink(false, null);
+        showToast("Link revogado.", "info");
+      })
+      .catch(function () { showToast("Erro ao revogar link.", "error"); });
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnCopiarLinkGaleria")) return;
+    var input = document.getElementById("galeriaLinkUrl");
+    input.select();
+    navigator.clipboard && navigator.clipboard.writeText(input.value);
+    showToast("Link copiado!", "success");
+  });
+})();
+
+/* ============================================================
+   12. EXCLUIR CONTA (LGPD — direito ao esquecimento)
+   ============================================================ */
+(function initExcluirConta() {
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnAbrirExcluirConta")) return;
+    document.getElementById("excluirContaSenha").value = "";
+    document.getElementById("excluirContaErro").style.display = "none";
+    openModal("modalExcluirConta");
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnConfirmarExcluirConta")) return;
+    var btn   = e.target.closest("#btnConfirmarExcluirConta");
+    var senha = document.getElementById("excluirContaSenha").value;
+    var erro  = document.getElementById("excluirContaErro");
+    erro.style.display = "none";
+
+    if (!senha) {
+      erro.textContent = "Digite sua senha para confirmar.";
+      erro.style.display = "block";
+      return;
+    }
+
+    var token = localStorage.getItem("cm-token");
+    btn.disabled = true;
+    fetch(API + "/auth/me", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token ? "Bearer " + token : ""
+      },
+      body: JSON.stringify({ senha: senha })
+    })
+    .then(function (r) {
+      if (r.status === 204) {
+        localStorage.removeItem("cm-token");
+        localStorage.removeItem("cm-user");
+        localStorage.removeItem("cm-user-id");
+        window.location.href = "index.html";
+        return;
+      }
+      return r.json().then(function (d) {
+        erro.textContent = d.message || "Não foi possível excluir a conta.";
+        erro.style.display = "block";
+      });
+    })
+    .catch(function () {
+      erro.textContent = "Não foi possível conectar ao servidor.";
+      erro.style.display = "block";
+    })
+    .finally(function () { btn.disabled = false; });
+  });
+})();
+
+/* ============================================================
+   13. AJAX TICKER (dica do dia na landing)
    ============================================================ */
 (function initTicker() {
   var el = document.getElementById("tickerContent");
