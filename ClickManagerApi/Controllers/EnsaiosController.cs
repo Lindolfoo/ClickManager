@@ -36,7 +36,7 @@ public class EnsaiosController : ControllerBase
             .OrderByDescending(e => e.DataHora)
             .Select(e => new {
                 e.Id, e.Titulo, e.DataHora, e.Local, e.Valor, e.Status, e.TotalImagens,
-                Cliente    = e.Cliente.Nome,
+                Cliente    = e.Cliente!.Nome,
                 Contrato   = e.Contrato != null ? e.Contrato.Numero : null,
                 StatusPgto = _db.Pagamentos
                                 .Where(p => p.EnsaioId == e.Id)
@@ -135,7 +135,7 @@ public class EnsaiosController : ControllerBase
             .CountAsync();
 
         var pgtosPendentes = await _db.Pagamentos
-            .Where(p => p.Ensaio.FotografoId == fid && p.Status == "Pendente")
+            .Where(p => p.Ensaio!.FotografoId == fid && p.Status == "Pendente")
             .CountAsync();
 
         var clientesAtivos = await _db.Clientes
@@ -143,7 +143,7 @@ public class EnsaiosController : ControllerBase
             .CountAsync();
 
         var totalRecebido = await _db.Pagamentos
-            .Where(p => p.Ensaio.FotografoId == fid && p.Status == "Pago")
+            .Where(p => p.Ensaio!.FotografoId == fid && p.Status == "Pago")
             .SumAsync(p => p.Valor);
 
         var agendaSemana = await _db.Ensaios
@@ -153,7 +153,7 @@ public class EnsaiosController : ControllerBase
                         e.DataHora >= DateTime.Today &&
                         e.DataHora <= DateTime.Today.AddDays(7))
             .OrderBy(e => e.DataHora)
-            .Select(e => new { e.Titulo, e.DataHora, e.Local, Cliente = e.Cliente.Nome, Contrato = e.Contrato!.Numero })
+            .Select(e => new { e.Titulo, e.DataHora, e.Local, Cliente = e.Cliente!.Nome, Contrato = e.Contrato!.Numero })
             .ToListAsync();
 
         return Ok(new

@@ -23,13 +23,13 @@ public class PagamentosController : ControllerBase
     {
         var fid = FotografoId;
         var lista = await _db.Pagamentos
-            .Include(p => p.Ensaio).ThenInclude(e => e.Cliente)
-            .Where(p => p.Ensaio.FotografoId == fid)
+            .Include(p => p.Ensaio!).ThenInclude(e => e.Cliente)
+            .Where(p => p.Ensaio!.FotografoId == fid)
             .OrderByDescending(p => p.CriadoEm)
             .Select(p => new {
                 p.Id, p.Valor, p.Tipo, p.Metodo, p.Status, p.DataPagamento,
-                Ensaio  = p.Ensaio.Titulo,
-                Cliente = p.Ensaio.Cliente.Nome
+                Ensaio  = p.Ensaio!.Titulo,
+                Cliente = p.Ensaio.Cliente!.Nome
             })
             .ToListAsync();
 

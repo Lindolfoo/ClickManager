@@ -23,13 +23,13 @@ public class ContratosController : ControllerBase
     {
         var fid = FotografoId;
         var lista = await _db.Contratos
-            .Include(c => c.Ensaio).ThenInclude(e => e.Cliente)
-            .Where(c => c.Ensaio.FotografoId == fid)
+            .Include(c => c.Ensaio!).ThenInclude(e => e.Cliente)
+            .Where(c => c.Ensaio!.FotografoId == fid)
             .OrderByDescending(c => c.CriadoEm)
             .Select(c => new {
                 c.Id, c.Numero, c.Status, c.DataAssinatura, c.CriadoEm,
-                Ensaio  = c.Ensaio.Titulo,
-                Cliente = c.Ensaio.Cliente.Nome,
+                Ensaio  = c.Ensaio!.Titulo,
+                Cliente = c.Ensaio.Cliente!.Nome,
                 Valor   = c.Ensaio.Valor
             })
             .ToListAsync();

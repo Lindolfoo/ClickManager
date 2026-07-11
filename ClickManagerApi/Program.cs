@@ -105,6 +105,32 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+// Falha rápido em produção se segredos críticos ainda estiverem com os valores
+// de exemplo do appsettings.json — esses valores estão no histórico do Git,
+// então subir com eles ativos permitiria forjar tokens JWT ou expor a senha
+// de exemplo do banco. Não roda em Development/Testing para não incomodar
+// devs locais nem quebrar a WebApplicationFactory dos testes.
+if (app.Environment.IsProduction())
+{
+    var jwtKey = app.Configuration["Jwt:Key"];
+    if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32 ||
+        jwtKey == "SUA_CHAVE_JWT_COM_PELO_MENOS_32_CARACTERES")
+    {
+        throw new InvalidOperationException(
+            "Jwt:Key não está configurado com um valor seguro para produção. Defina a variável de " +
+            "ambiente Jwt__Key com uma chave aleatória de pelo menos 32 caracteres " +
+            "(gere com: openssl rand -base64 48).");
+    }
+
+    var connectionString = app.Configuration.GetConnectionString("DefaultConnection");
+    if (connectionString is null || connectionString.Contains("your_db_password"))
+    {
+        throw new InvalidOperationException(
+            "ConnectionStrings:DefaultConnection ainda usa a senha de exemplo do appsettings.json. " +
+            "Defina ConnectionStrings__DefaultConnection com as credenciais reais do banco.");
+    }
+}
+
 // Auto-migration (InMemory uses EnsureCreated; SQL Server uses Migrate)
 using (var scope = app.Services.CreateScope())
 {

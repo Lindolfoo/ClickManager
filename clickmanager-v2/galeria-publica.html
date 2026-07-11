@@ -109,7 +109,9 @@ main{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
 </div>
 
 <script>
-var API = "http://localhost:5000/api";
+var API = (["localhost","127.0.0.1",""].indexOf(location.hostname) >= 0)
+  ? "http://localhost:5000/api"
+  : "https://clickmanager-api-production.up.railway.app/api";
 var imagens = [];
 var indiceAtual = 0;
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Entrar – Click Manager</title>
 <link rel="icon" href="/icons/favicon.ico" />
-<link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/favicon-32x32.svg" />
+<link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/faviconsvg.svg" />
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/android-chrome-192x192.png" />
@@ -271,8 +271,9 @@ input[type="password"]::-webkit-credentials-auto-fill-button { display: none !im
 
 <script>
 
-// URL base da API (ajuste em produção)
-var API = "http://localhost:5000/api";
+var API = (["localhost","127.0.0.1",""].indexOf(location.hostname) >= 0)
+  ? "http://localhost:5000/api"
+  : "https://clickmanager-api-production.up.railway.app/api";
 
 // ── Lembrar de mim ───────────────────────────────────────
 (function(){
@@ -411,7 +412,7 @@ document.getElementById("btnLogin").addEventListener("click",async function(){
   }catch(e){
     // API offline → NÃO redireciona, avisa o usuário
     document.getElementById("alertErrorMsg").textContent=
-      "Não foi possível conectar ao servidor. Verifique se a API está rodando em localhost:5000.";
+      "Não foi possível conectar ao servidor. Tente novamente em instantes.";
     alertErr.classList.add("show");
   }finally{
     btn.disabled=false;spinner.style.display="none";txt.textContent="Entrar na conta";

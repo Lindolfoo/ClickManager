@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Click Manager | Dashboard</title>
   <link rel="icon" href="/icons/favicon.ico" />
-  <link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/favicon-32x32.svg" />
+  <link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/faviconsvg.svg" />
   <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/android-chrome-192x192.png" />
@@ -2213,7 +2213,9 @@ body {
 /* ============================================================
    CONFIG
    ============================================================ */
-var API = "http://localhost:5000/api";
+var API = (["localhost","127.0.0.1",""].indexOf(location.hostname) >= 0)
+  ? "http://localhost:5000/api"
+  : "https://clickmanager-api-production.up.railway.app/api";
 
 /* ============================================================
    1. TEMA CLARO / ESCURO  (corrigido)
@@ -2622,7 +2624,7 @@ var API = "http://localhost:5000/api";
     .catch(function() {
       btn.disabled = false;
       btn.textContent = "Enviar solicitação";
-      showFormAlert("danger", "⚠️ Não foi possível conectar à API. Verifique se está rodando em localhost:5000.");
+      showFormAlert("danger", "⚠️ Não foi possível conectar ao servidor. Tente novamente em instantes.");
     });
   });
 
@@ -3192,41 +3194,94 @@ function fmtDate(s) {
    10c2. GALERIA DO ENSAIO
    ============================================================ */
 (function initGaleria() {
+  var ensaioSelecionado = null;
+
   function carregarEnsaiosSelect(selId) {
     return fetch(API + "/ensaios", { headers: authHdr() })
       .then(function(r){ return r.ok ? r.json() : []; })
       .then(function(list) {
         var sel = document.getElementById(selId);
         if (sel) {
+          var valorAtual = sel.value;
           sel.innerHTML = '<option value="">Selecione o ensaio</option>' +
             list.map(function(e){ return '<option value="'+e.id+'">'+( e.titulo||"Ensaio #"+e.id )+' — '+(e.cliente||"")+'</option>'; }).join("");
+          if (valorAtual) sel.value = valorAtual;
         }
         return list;
       })
       .catch(function(err) { console.error("Erro carregando ensaios:", err); return []; });
   }
 
-  function atualizarGaleriaEmptyState() {
-    var titleEl = document.getElementById("galeriaEmptyTitle");
-    var textEl = document.getElementById("galeriaEmptyText");
-    var uploadBtn = document.getElementById("btnFazerUpload");
-    var markBtn = document.getElementById("btnMarcarEnsaio");
-    if (!titleEl || !textEl || !uploadBtn || !markBtn) return;
+  document.addEventListener("pagechange", function(e) {
+    if (e.detail.page !== "galeria") return;
+    carregarEnsaiosSelect("galeriaEnsaioAtual");
+    carregarEnsaiosSelect("galeriaEnsaioId");
+    atualizarEstadoGaleria();
+  });
 
-    carregarEnsaiosSelect("galeriaEnsaioId").then(function(list) {
-      if (!list || list.length === 0) {
-        titleEl.textContent = "Não há ensaios marcados";
-        textEl.textContent = "Crie um ensaio antes de enviar fotos para a galeria.";
-        uploadBtn.style.display = "none";
-        markBtn.style.display = "inline-flex";
-      } else {
-        titleEl.textContent = "Nenhuma imagem ainda";
-        textEl.textContent = "Envie suas fotos para começar a montar a vitrine pública do fotógrafo.";
-        uploadBtn.style.display = "inline-flex";
-        markBtn.style.display = "none";
-      }
+  document.addEventListener("change", function(e) {
+    if (e.target.id !== "galeriaEnsaioAtual") return;
+    ensaioSelecionado = e.target.value || null;
+    atualizarEstadoGaleria();
+  });
+
+  function atualizarEstadoGaleria() {
+    var titleEl = document.getElementById("galeriaEmptyTitle");
+    var textEl  = document.getElementById("galeriaEmptyText");
+    var grid    = document.getElementById("galeriaGrid");
+    var empty   = document.getElementById("galeriaEmptyCard");
+    if (!titleEl || !textEl || !grid || !empty) return;
+
+    if (!ensaioSelecionado) {
+      empty.style.display = "block";
+      grid.style.display  = "none";
+      titleEl.textContent = "Selecione um ensaio";
+      textEl.textContent  = "Escolha um ensaio acima para ver ou enviar fotos da galeria de entrega.";
+      return;
+    }
+
+    fetch(API + "/galeria/" + ensaioSelecionado, { headers: authHdr() })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(imagens) { renderGaleriaGrid(Array.isArray(imagens) ? imagens : []); })
+      .catch(function() { renderGaleriaGrid([]); });
+  }
+
+  function renderGaleriaGrid(imagens) {
+    var titleEl = document.getElementById("galeriaEmptyTitle");
+    var textEl  = document.getElementById("galeriaEmptyText");
+    var grid    = document.getElementById("galeriaGrid");
+    var empty   = document.getElementById("galeriaEmptyCard");
+
+    if (imagens.length === 0) {
+      empty.style.display = "block";
+      grid.style.display  = "none";
+      titleEl.textContent = "Nenhuma imagem ainda";
+      textEl.textContent  = "Envie as fotos deste ensaio para montar a galeria de entrega ao cliente.";
+      return;
+    }
+
+    empty.style.display = "none";
+    grid.style.display  = "grid";
+    grid.innerHTML = "";
+    imagens.forEach(function(img) {
+      var url = img.url || img.Url;
+      var id  = img.id  || img.Id;
+      var div = document.createElement("div");
+      div.style.cssText = "position:relative;border-radius:var(--radius-sm);overflow:hidden;aspect-ratio:1;border:1px solid var(--border)";
+      div.innerHTML =
+        '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;display:block" alt=""/>' +
+        '<button class="btn-icon" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none" data-del-img="' + id + '"><i class="bi bi-trash"></i></button>';
+      grid.appendChild(div);
     });
   }
+
+  document.addEventListener("click", function(e) {
+    var delBtn = e.target.closest("[data-del-img]");
+    if (!delBtn) return;
+    fetch(API + "/galeria/" + delBtn.getAttribute("data-del-img"), { method: "DELETE", headers: authHdr() })
+      .then(function() { showToast("Imagem removida.", "success"); atualizarEstadoGaleria(); })
+      .catch(function() { showToast("Erro ao remover imagem.", "error"); });
+  });
 
   function abrirModalUpload() {
     carregarEnsaiosSelect("galeriaEnsaioId").then(function(list) {
@@ -3237,6 +3292,8 @@ function fmtDate(s) {
         return;
       }
 
+      var modalSel = document.getElementById("galeriaEnsaioId");
+      if (ensaioSelecionado) modalSel.value = ensaioSelecionado;
       var preview = document.getElementById("galeriaPreview");
       if (preview) preview.innerHTML = "";
       var fi = document.getElementById("galeriaFileInput");
@@ -3250,12 +3307,6 @@ function fmtDate(s) {
   document.addEventListener("click", function(e) {
     if (e.target.closest("#btnEnviarImagens") || e.target.closest("#btnFazerUpload")) abrirModalUpload();
   });
-
-  document.addEventListener("pagechange", function(e) {
-    if (e.detail.page === "galeria") atualizarGaleriaEmptyState();
-  });
-
-  atualizarGaleriaEmptyState();
 
   document.addEventListener("click", function(e) {
     if (e.target.closest("#galeriaDropArea")) {
@@ -3306,10 +3357,55 @@ function fmtDate(s) {
     .then(function() {
       closeModal("modalGaleriaUpload");
       showToast("Imagens enviadas com sucesso!", "success");
+      if (ensaioId === ensaioSelecionado) atualizarEstadoGaleria();
     })
     .catch(function(){ showToast("Erro ao enviar imagens. Verifique a API.", "error"); })
     .finally(function(){ btn.disabled = false; btn.textContent = "Enviar"; });
   });
+
+  // ── Compartilhar / link público ───────────────────────────
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest("#btnCompartilharGaleria")) return;
+    if (!ensaioSelecionado) { showToast("Selecione um ensaio primeiro.", "error"); return; }
+    fetch(API + "/galeria/" + ensaioSelecionado + "/link", { headers: authHdr() })
+      .then(function(r){ return r.json(); })
+      .then(function(data){ atualizarModalLink(data.ativo, data.url); })
+      .catch(function(){ atualizarModalLink(false, null); });
+    openModal("modalGaleriaLink");
+  });
+
+  function atualizarModalLink(ativo, url) {
+    document.getElementById("galeriaLinkAtivoGroup").style.display = ativo ? "block" : "none";
+    document.getElementById("galeriaLinkInativoMsg").style.display = ativo ? "none"  : "block";
+    document.getElementById("btnRevogarLinkGaleria").style.display = ativo ? "inline-flex" : "none";
+    document.getElementById("btnGerarLinkGaleria").textContent     = ativo ? "Gerar novo link" : "Gerar link";
+    if (ativo) document.getElementById("galeriaLinkUrl").value = url;
+  }
+
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest("#btnGerarLinkGaleria")) return;
+    fetch(API + "/galeria/" + ensaioSelecionado + "/link?regenerar=true", { method: "POST", headers: authHdr() })
+      .then(function(r){ return r.json(); })
+      .then(function(data){ atualizarModalLink(true, data.url); showToast("Link gerado!", "success"); })
+      .catch(function(){ showToast("Erro ao gerar link.", "error"); });
+  });
+
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest("#btnRevogarLinkGaleria")) return;
+    fetch(API + "/galeria/" + ensaioSelecionado + "/link", { method: "DELETE", headers: authHdr() })
+      .then(function(){ atualizarModalLink(false, null); showToast("Link revogado.", "info"); })
+      .catch(function(){ showToast("Erro ao revogar link.", "error"); });
+  });
+
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest("#btnCopiarLinkGaleria")) return;
+    var input = document.getElementById("galeriaLinkUrl");
+    input.select();
+    navigator.clipboard && navigator.clipboard.writeText(input.value);
+    showToast("Link copiado!", "success");
+  });
+
+  atualizarEstadoGaleria();
 })();
 
 /* ============================================================
@@ -3501,6 +3597,57 @@ function fmtDate(s) {
       }
     });
   }
+})();
+
+/* ============================================================
+   10e. EXCLUIR CONTA (LGPD — direito ao esquecimento)
+   ============================================================ */
+(function initExcluirConta() {
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnAbrirExcluirConta")) return;
+    document.getElementById("excluirContaSenha").value = "";
+    document.getElementById("excluirContaErro").style.display = "none";
+    openModal("modalExcluirConta");
+  });
+
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("#btnConfirmarExcluirConta")) return;
+    var btn   = e.target.closest("#btnConfirmarExcluirConta");
+    var senha = document.getElementById("excluirContaSenha").value;
+    var erro  = document.getElementById("excluirContaErro");
+    erro.style.display = "none";
+
+    if (!senha) {
+      erro.textContent = "Digite sua senha para confirmar.";
+      erro.style.display = "block";
+      return;
+    }
+
+    btn.disabled = true;
+    fetch(API + "/auth/me", {
+      method: "DELETE",
+      headers: authHdr(),
+      body: JSON.stringify({ senha: senha })
+    })
+    .then(function (r) {
+      if (r.status === 204) {
+        localStorage.removeItem("cm-token");
+        localStorage.removeItem("cm-user");
+        localStorage.removeItem("cm-user-id");
+        window.location.href = "index.html";
+        return;
+      }
+      return r.json().then(function (d) {
+        erro.textContent = d.message || "Não foi possível excluir a conta.";
+        erro.style.display = "block";
+      });
+    })
+    .catch(function () {
+      erro.textContent = "Não foi possível conectar ao servidor.";
+      erro.style.display = "block";
+    })
+    .finally(function () { btn.disabled = false; });
+  });
 })();
 
 /* ============================================================
