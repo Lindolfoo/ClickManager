@@ -4,12 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Click Manager – Gestão para Fotógrafos</title>
-<link rel="icon" href="/icons/favicon.ico" />
-<link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/faviconsvg.svg" />
-<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-<link rel="icon" type="image/png" sizes="192x192" href="/icons/android-chrome-192x192.png" />
-<link rel="icon" type="image/png" sizes="512x512" href="/icons/android-chrome-512x512.png" />
+<link rel="icon" href="icons/favicon.ico" />
+<link rel="icon" type="image/svg+xml" sizes="32x32" href="icons/faviconsvg.svg" />
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icons/android-chrome-512x512.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -63,14 +63,12 @@ img{max-width:100%;display:block}
   align-items:center;
   padding:0 max(24px,calc(50vw - 620px));
   gap:32px;
-  transition:background .35s ease,transform .35s ease,box-shadow .35s ease,padding .35s ease;
-  transform:translateY(-100%);
+  transition:background .35s ease,box-shadow .35s ease,padding .35s ease;
   background:transparent;
 }
-.nav.visible{transform:translateY(0);}
 .nav-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.1rem;color:#fff}
 .nav.scrolled .nav-brand{color:var(--text)}
-.nav-brand-icon{width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.05rem;flex-shrink:0}
+.nav-brand-icon{width:36px;height:36px;background:var(--accent);border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.05rem;flex-shrink:0}
 .nav-brand-icon.logo-image{background:transparent}
 .nav-brand-icon.logo-image img{width:100%;height:100%;object-fit:contain;border-radius:inherit;display:block}
 .footer-brand .brand-icon.logo-image{background:transparent}
@@ -402,7 +400,7 @@ img{max-width:100%;display:block}
 .footer{background:#0a0a09;padding:56px max(24px,calc(50vw - 620px)) 28px;color:rgba(255,255,255,.55)}
 .footer-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:48px;margin-bottom:56px}
 .footer-brand .brand-name{font-weight:700;font-size:1.05rem;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.footer-brand .brand-icon{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem}
+.footer-brand .brand-icon{width:30px;height:30px;background:var(--accent);border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.9rem}
 .footer-brand p{font-size:.82rem;line-height:1.75;max-width:230px}
 .footer-col h4{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.35);margin-bottom:16px}
 .footer-col a{display:block;font-size:.83rem;color:rgba(255,255,255,.5);margin-bottom:9px;transition:color var(--ease)}
@@ -482,7 +480,7 @@ img{max-width:100%;display:block}
 <!-- ── NAV ── -->
 <nav class="nav" id="mainNav">
   <div class="nav-brand">
-    <div class="nav-brand-icon logo-image"><img src="/icons/logo.svg" alt="Click Manager logo"/></div>
+    <div class="nav-brand-icon logo-image"><img src="icons/logo.svg" alt="Click Manager logo"/></div>
     Click Manager
   </div>
   <div class="nav-links">
@@ -916,7 +914,7 @@ img{max-width:100%;display:block}
 <footer class="footer">
   <div class="footer-grid">
     <div class="footer-brand">
-      <div class="brand-name"><div class="brand-icon logo-image"><img src="/icons/logo.svg" alt="Click Manager logo"/></div>Click Manager</div>
+      <div class="brand-name"><div class="brand-icon logo-image"><img src="icons/logo.svg" alt="Click Manager logo"/></div>Click Manager</div>
       <p>A plataforma de gestão nº1 para fotógrafos freelancers. Simplifique, organize e fature mais.</p>
     </div>
     <div class="footer-col">
@@ -950,11 +948,10 @@ img{max-width:100%;display:block}
 <script>
 
 // ── Nav scroll ────────────────────────────────────────────
+// Menu sempre fixo e visível; só troca de cor (texto claro sobre a
+// hero → texto escuro sobre o fundo claro) conforme o scroll.
 (function(){
   var nav=document.getElementById("mainNav");
-  var scrollTimer=null;
-  // ensure nav starts hidden
-  nav.classList.remove('visible');
 
   function onScroll(){
     // Determine scrolled state based on when the stats strip crosses the nav brand
@@ -973,20 +970,9 @@ img{max-width:100%;display:block}
     }
 
     nav.classList.toggle('scrolled', scrolled);
-
-    // show nav while scrolling
-    if(!nav.classList.contains('visible')) nav.classList.add('visible');
-
-    // reset timer
-    if(scrollTimer) clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(function(){
-      nav.classList.remove('visible');
-    }, 700);
   }
 
   window.addEventListener('scroll', onScroll, {passive:true});
-  // also show once if user interacts by touch (mobile)
-  window.addEventListener('touchstart', onScroll, {passive:true});
 })();
 
 // ── Scroll reveal ─────────────────────────────────────────

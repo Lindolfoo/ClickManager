@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <meta name="robots" content="noindex,nofollow"/>
 <title>Redefinir senha – Click Manager</title>
-<link rel="icon" href="/icons/favicon.ico" />
-<link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/faviconsvg.svg" />
+<link rel="icon" href="icons/favicon.ico" />
+<link rel="icon" type="image/svg+xml" sizes="32x32" href="icons/faviconsvg.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -31,8 +31,8 @@ body{
   box-shadow:var(--shadow-lg);width:100%;max-width:440px;padding:40px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.1rem;
   color:var(--accent);margin-bottom:28px}
-.brand-icon{width:36px;height:36px;background:var(--accent-mid);border-radius:10px;
-  display:flex;align-items:center;justify-content:center}
+.brand-icon{width:36px;height:36px;flex-shrink:0}
+.brand-icon img{width:100%;height:100%;object-fit:contain;display:block}
 h1{font-family:var(--font-serif);font-size:1.8rem;margin-bottom:6px}
 .sub{font-size:.875rem;color:var(--text2);margin-bottom:28px;line-height:1.6}
 
@@ -81,7 +81,7 @@ input[type="password"]::-ms-reveal,input[type="password"]::-ms-clear{display:non
 
 <div class="card">
   <div class="brand">
-    <span class="brand-icon"><i class="bi bi-camera"></i></span>
+    <span class="brand-icon"><img src="icons/logo.svg" alt="Click Manager"/></span>
     Click Manager
   </div>
 

@@ -164,6 +164,28 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Senha redefinida com sucesso. Faça login com a nova senha." });
     }
 
+    // PUT /api/auth/senha — troca de senha estando logado (exige a senha atual).
+    [HttpPut("senha")]
+    [Authorize]
+    public async Task<IActionResult> AlterarSenha([FromBody] AlterarSenhaRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.NovaSenha) || req.NovaSenha.Length < 8)
+            return BadRequest(new { message = "A nova senha deve ter pelo menos 8 caracteres." });
+
+        var fotografo = await _db.Fotografos.FindAsync(FotografoId);
+        if (fotografo is null) return NotFound();
+
+        if (!BCrypt.Net.BCrypt.Verify(req.SenhaAtual, fotografo.SenhaHash))
+            return Unauthorized(new { message = "Senha atual incorreta." });
+
+        fotografo.SenhaHash    = BCrypt.Net.BCrypt.HashPassword(req.NovaSenha);
+        fotografo.AtualizadoEm = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Senha alterada pelo próprio fotógrafo {Id}", fotografo.Id);
+        return Ok(new { message = "Senha alterada com sucesso." });
+    }
+
     /// <summary>256 bits de entropia, codificados em Base64 URL-safe.</summary>
     private static string GerarTokenSeguro()
     {
@@ -188,8 +210,13 @@ public class AuthController : ControllerBase
         Telefone   = f.Telefone,
         Instagram  = f.Instagram,
         Bio        = f.Bio,
+        FotoUrl    = f.FotoUrl,
+        BannerPreset = f.BannerPreset,
+        BannerUrl    = f.BannerUrl,
         PlanoAtivo = f.PlanoAtivo
     };
+
+    private static readonly HashSet<string> PresetsValidos = ["flores", "ceu", "vintage", "estrelas"];
 
     private AuthResponse BuildResponse(Fotografo f) => new()
     {
@@ -221,6 +248,91 @@ public class AuthController : ControllerBase
         fotografo.AtualizadoEm = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        return Ok(BuildDto(fotografo));
+    }
+
+    // POST /api/auth/foto — foto de perfil salva no servidor (antes só ficava
+    // no localStorage do navegador, então sumia ao trocar de aparelho).
+    [HttpPost("foto")]
+    [Authorize]
+    public async Task<IActionResult> UploadFoto([FromForm] IFormFile arquivo)
+    {
+        var fotografo = await _db.Fotografos.FindAsync(FotografoId);
+        if (fotografo is null) return NotFound();
+
+        string url;
+        try { url = await _upload.UploadAsync(arquivo, "perfil"); }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+
+        if (fotografo.FotoUrl is not null) _upload.Delete(fotografo.FotoUrl);
+
+        fotografo.FotoUrl      = url;
+        fotografo.AtualizadoEm = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok(BuildDto(fotografo));
+    }
+
+    // DELETE /api/auth/foto
+    [HttpDelete("foto")]
+    [Authorize]
+    public async Task<IActionResult> DeleteFoto()
+    {
+        var fotografo = await _db.Fotografos.FindAsync(FotografoId);
+        if (fotografo is null) return NotFound();
+
+        if (fotografo.FotoUrl is not null)
+        {
+            _upload.Delete(fotografo.FotoUrl);
+            fotografo.FotoUrl      = null;
+            fotografo.AtualizadoEm = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+
+        return Ok(BuildDto(fotografo));
+    }
+
+    // PUT /api/auth/banner — escolhe um dos presets de gradiente do banner do
+    // portfólio (limpa o banner customizado, se houver).
+    [HttpPut("banner")]
+    [Authorize]
+    public async Task<IActionResult> AtualizarBanner([FromBody] AtualizarBannerRequest req)
+    {
+        if (!PresetsValidos.Contains(req.Preset))
+            return BadRequest(new { message = "Preset de banner inválido." });
+
+        var fotografo = await _db.Fotografos.FindAsync(FotografoId);
+        if (fotografo is null) return NotFound();
+
+        if (fotografo.BannerUrl is not null) _upload.Delete(fotografo.BannerUrl);
+
+        fotografo.BannerPreset = req.Preset;
+        fotografo.BannerUrl    = null;
+        fotografo.AtualizadoEm = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return Ok(BuildDto(fotografo));
+    }
+
+    // POST /api/auth/banner-imagem — banner customizado com imagem própria.
+    [HttpPost("banner-imagem")]
+    [Authorize]
+    public async Task<IActionResult> UploadBannerImagem([FromForm] IFormFile arquivo)
+    {
+        var fotografo = await _db.Fotografos.FindAsync(FotografoId);
+        if (fotografo is null) return NotFound();
+
+        string url;
+        try { url = await _upload.UploadAsync(arquivo, "banner"); }
+        catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+
+        if (fotografo.BannerUrl is not null) _upload.Delete(fotografo.BannerUrl);
+
+        fotografo.BannerUrl    = url;
+        fotografo.BannerPreset = "custom";
+        fotografo.AtualizadoEm = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
         return Ok(BuildDto(fotografo));
     }
 
@@ -258,6 +370,8 @@ public class AuthController : ControllerBase
         // URLs dos arquivos físicos: o banco só apaga as linhas, não os arquivos em disco.
         var urlsArquivos = imagensGaleria.Select(i => i.Url)
             .Concat(imagensPortfolio.Select(i => i.Url))
+            .Concat(fotografo.FotoUrl is not null ? [fotografo.FotoUrl] : Enumerable.Empty<string>())
+            .Concat(fotografo.BannerUrl is not null ? [fotografo.BannerUrl] : Enumerable.Empty<string>())
             .ToList();
 
         _db.Pagamentos.RemoveRange(pagamentos);

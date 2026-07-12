@@ -26,6 +26,15 @@ public class Fotografo
     [MaxLength(500)]
     public string? Bio         { get; set; }
 
+    [MaxLength(500)]
+    public string? FotoUrl     { get; set; }
+
+    [MaxLength(30)]
+    public string BannerPreset { get; set; } = "flores";
+
+    [MaxLength(500)]
+    public string? BannerUrl   { get; set; }
+
     [MaxLength(20)]
     public string PlanoAtivo   { get; set; } = "starter";
 

@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Click Manager | Dashboard</title>
-  <link rel="icon" href="/icons/favicon.ico" />
-  <link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/faviconsvg.svg" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="/icons/android-chrome-192x192.png" />
-  <link rel="icon" type="image/png" sizes="512x512" href="/icons/android-chrome-512x512.png" />
+  <link rel="icon" href="icons/favicon.ico" />
+  <link rel="icon" type="image/svg+xml" sizes="32x32" href="icons/faviconsvg.svg" />
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/android-chrome-192x192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/android-chrome-512x512.png" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <style>
 /* ============================================================
@@ -133,7 +133,8 @@ body {
 .sidebar-brand .brand-icon {
   width: 36px; height: 36px;
   background: var(--accent);
-  border-radius: 10px;
+  border-radius: 50%;
+  overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   color: #fff;
   font-size: 1.1rem;
@@ -426,6 +427,59 @@ body {
 /* ---------- TWO-COL GRID ---------- */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ---------- CHARTS (dashboard) ---------- */
+.viz-wrap {
+  --viz-grid:   var(--border);
+  --viz-ink:    var(--text);
+  --viz-muted:  var(--text2);
+  --viz-good:   var(--success);
+  --viz-warn:   var(--warning);
+  --viz-bad:    var(--danger);
+  position: relative;
+}
+.viz-empty { padding: 32px 0; text-align: center; color: var(--text2); font-size: .82rem; }
+.viz-svg { width: 100%; height: auto; overflow: visible; }
+.viz-svg text { font-family: var(--font); fill: var(--viz-muted); font-size: 11px; }
+.viz-gridline { stroke: var(--viz-grid); stroke-width: 1; shape-rendering: crispEdges; }
+.viz-axis-label { fill: var(--viz-muted); }
+.viz-line { fill: none; stroke: var(--accent-text); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.viz-area { fill: var(--accent-text); opacity: .1; }
+.viz-dot { fill: var(--accent-text); stroke: var(--surface); stroke-width: 2; }
+.viz-bar { fill: var(--accent-text); cursor: pointer; transition: opacity .15s; }
+.viz-bar:hover, .viz-bar.is-active { opacity: .75; }
+.viz-hit { fill: transparent; cursor: pointer; }
+.viz-crosshair { stroke: var(--viz-muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; pointer-events: none; }
+.viz-donut-seg { cursor: pointer; transition: opacity .15s, stroke-width .15s; }
+.viz-donut-seg:hover, .viz-donut-seg.is-active { opacity: .85; }
+
+.viz-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--text);
+  color: var(--surface);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: .78rem;
+  line-height: 1.5;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translate(-50%, calc(-100% - 10px));
+  transition: opacity .1s;
+  z-index: 20;
+  white-space: nowrap;
+}
+.viz-tooltip.show { opacity: 1; }
+.viz-tooltip .viz-tt-value { font-weight: 700; }
+.viz-tooltip .viz-tt-row { display: flex; align-items: center; gap: 6px; }
+.viz-tooltip .viz-tt-key { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.viz-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; }
+.viz-legend-item { display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--text2); }
+.viz-legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+.viz-donut-center-value { font-size: 1.5rem; font-weight: 800; fill: var(--viz-ink); font-family: var(--font-mono); }
+.viz-donut-center-label { font-size: .68rem; fill: var(--viz-muted); }
 
 /* ---------- ENSAIO / CLIENT LIST ITEM ---------- */
 .list-item {
@@ -1440,7 +1494,7 @@ body {
   ══════════════════════════════════════════ -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon logo-image"><img src="/icons/logo.svg" alt="Click Manager logo"/></div>
+      <div class="brand-icon logo-image"><img src="icons/logo.svg" alt="Click Manager logo"/></div>
       <div>
         <div class="brand-text">Click Manager</div>
         <div class="brand-sub">Área administrativa</div>
@@ -1552,6 +1606,34 @@ body {
           <div class="stat-label">Média estimada mensal</div>
           <div class="stat-value" id="statMedia" style="font-size:1.4rem;font-family:var(--font-mono)">—</div>
           <div class="stat-sub">Baseada nos seus ensaios</div>
+        </div>
+      </div>
+
+      <!-- GRÁFICOS: faturamento + ensaios por dia -->
+      <div class="two-col" style="margin-bottom:24px">
+        <div class="card">
+          <div class="card-label">Financeiro · Últimos 7 dias</div>
+          <div class="card-title" style="margin-bottom:16px">Faturamento por dia</div>
+          <div class="viz-wrap" id="vizFaturamento"></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Agenda · Últimos 7 dias</div>
+          <div class="card-title" style="margin-bottom:16px">Ensaios agendados por dia</div>
+          <div class="viz-wrap" id="vizEnsaiosDia"></div>
+        </div>
+      </div>
+
+      <!-- GRÁFICOS: status -->
+      <div class="two-col" style="margin-bottom:24px">
+        <div class="card">
+          <div class="card-label">Financeiro</div>
+          <div class="card-title" style="margin-bottom:16px">Status dos pagamentos</div>
+          <div class="viz-wrap" id="vizStatusPagamentos"></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Agenda</div>
+          <div class="card-title" style="margin-bottom:16px">Status dos ensaios</div>
+          <div class="viz-wrap" id="vizStatusEnsaios"></div>
         </div>
       </div>
 
@@ -1835,16 +1917,16 @@ body {
     <!-- ═══ PAGE: PORTFÓLIO ═══ -->
     <div class="page" id="page-portfolio" data-title="Portfólio Público">
       <!-- HEADER BANNER -->
-      <div style="background:linear-gradient(135deg,var(--accent) 0%,#4338ca 100%);border-radius:var(--radius);padding:40px;margin-bottom:24px;color:#fff;display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">
+      <div id="portfolioBanner" style="background:linear-gradient(135deg,var(--accent) 0%,#4338ca 100%);border-radius:var(--radius);padding:40px;margin-bottom:24px;color:#fff;display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;background-size:cover;background-position:center">
         <!-- Avatar -->
         <div id="portfolioAvatarContainer" style="flex-shrink:0">
-          <img id="portfolioAvatar" src="https://via.placeholder.com/120?text=Foto" alt="Foto do fotógrafo" style="width:120px;height:120px;border-radius:16px;border:3px solid rgba(255,255,255,.25);object-fit:cover;background:rgba(255,255,255,.1)">
+          <img id="portfolioAvatar" src="icons/avatar-placeholder.png" alt="Foto do fotógrafo" style="width:120px;height:120px;border-radius:16px;border:3px solid rgba(255,255,255,.25);object-fit:cover;background:rgba(255,255,255,.1)">
         </div>
         
         <!-- Info -->
         <div style="flex:1;min-width:280px">
           <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);margin-bottom:16px">
-            <i class="bi bi-camera-fill"></i> Click Manager
+            <img src="icons/logo.svg" alt="" style="width:16px;height:16px;object-fit:contain"/> Click Manager
           </button>
           <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;opacity:.8;margin-bottom:4px">Portfólio Público</div>
           <h2 id="portfolioNome" style="font-size:2rem;font-weight:800;margin-bottom:8px">—</h2>
@@ -1865,14 +1947,14 @@ body {
         <div class="card-label">Gerenciamento</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <div class="card-title" style="margin:0">Editar portfólio</div>
-          <span style="font-size:.8rem;color:var(--text2)">0 imagens</span>
+          <span style="font-size:.8rem;color:var(--text2)" id="portfolioCount">0 imagens</span>
         </div>
         <p style="font-size:.82rem;color:var(--text2);margin-bottom:16px">
           Faça upload das suas imagens em alta qualidade e arraste os cards para definir a ordem de exibição.
         </p>
         <div style="display:flex;gap:12px;flex-wrap:wrap">
           <div style="flex:1;padding:16px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer" id="uploadArea">
-            <strong style="font-size:.875rem">Enviar imagens</strong>
+            <strong style="font-size:.875rem" id="uploadAreaLabel">Enviar imagens</strong>
             <p style="font-size:.78rem;color:var(--text2);margin-top:4px">Selecione arquivos JPG, PNG ou WEBP para publicar no portfólio.</p>
           </div>
           <button class="btn btn-ghost" id="btnLimparPortfolio">Limpar portfólio</button>
@@ -1925,19 +2007,45 @@ body {
           <div class="form-group"><label class="form-label">Instagram</label><input id="confInstagram" class="form-control" placeholder="@seuinstagram" /></div>
           <div class="form-group"><label class="form-label">Bio</label><textarea id="confBio" class="form-control" rows="3" placeholder="Conte sua história..."></textarea></div>
           <button id="btnSalvarPerfil" class="btn btn-primary">Salvar perfil</button>
+
+          <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:16px">
+            <label class="form-label">Senha</label>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <span style="letter-spacing:3px;color:var(--text2);font-size:.9rem">••••••••</span>
+              <button type="button" id="btnAbrirAlterarSenha" class="btn btn-outline btn-sm">Alterar</button>
+            </div>
+            <div id="senhaExpandida" style="display:none;margin-top:14px">
+              <div class="form-group"><label class="form-label">Senha atual</label><input type="password" id="senhaAtual" class="form-control" placeholder="••••••••" autocomplete="current-password"/></div>
+              <div class="form-group"><label class="form-label">Nova senha</label><input type="password" id="senhaNova" class="form-control" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/></div>
+              <div class="form-group"><label class="form-label">Confirmar nova senha</label><input type="password" id="senhaNovaConfirma" class="form-control" placeholder="Repita a nova senha" autocomplete="new-password"/></div>
+              <div id="senhaErro" style="display:none;color:var(--danger);font-size:.82rem;margin-bottom:8px"></div>
+              <div style="display:flex;gap:8px">
+                <button type="button" id="btnSalvarNovaSenha" class="btn btn-outline btn-sm">Salvar nova senha</button>
+                <button type="button" id="btnCancelarAlterarSenha" class="btn btn-ghost btn-sm">Cancelar</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="card">
-          <div class="card-label">Aparência</div>
-          <div class="card-title" style="margin-bottom:16px">Tema do sistema</div>
-          <p style="font-size:.875rem;color:var(--text2);margin-bottom:16px">Escolha o tema de cores do sistema.</p>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <button class="btn btn-ghost btn-sm" id="setLight" style="justify-content:flex-start;gap:10px;padding:8px 14px;font-size:.84rem">
-              <i class="bi bi-sun-fill" style="color:#f59e0b"></i> Tema claro
-            </button>
-            <button class="btn btn-ghost btn-sm" id="setDark" style="justify-content:flex-start;gap:10px;padding:8px 14px;font-size:.84rem">
-              <i class="bi bi-moon-fill" style="color:var(--accent-text)"></i> Tema escuro
-            </button>
+          <div class="card-label">Portfólio</div>
+          <div class="card-title" style="margin-bottom:16px">Banner do portfólio</div>
+          <p style="font-size:.82rem;color:var(--text2);margin-bottom:14px">Escolha um estilo pronto ou envie sua própria imagem para o topo do seu portfólio público.</p>
+          <div id="bannerPresets" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+            <button type="button" class="banner-preset-swatch" data-preset="flores" style="width:64px;height:64px;border-radius:12px;border:2px solid transparent;cursor:pointer;background:url('icons/banners/flores.jpg') center/cover no-repeat,linear-gradient(135deg,#f7d9d0 0%,#c97b8b 100%)" title="Flores"></button>
+            <button type="button" class="banner-preset-swatch" data-preset="ceu" style="width:64px;height:64px;border-radius:12px;border:2px solid transparent;cursor:pointer;background:url('icons/banners/ceu.jpg') center/cover no-repeat,linear-gradient(135deg,#cdd7ea 0%,#8fa3c9 100%)" title="Céu"></button>
+            <button type="button" class="banner-preset-swatch" data-preset="vintage" style="width:64px;height:64px;border-radius:12px;border:2px solid transparent;cursor:pointer;background:url('icons/banners/vintage.jpg') center/cover no-repeat,linear-gradient(135deg,#d9b7a0 0%,#8a5a45 100%)" title="Vintage"></button>
+            <button type="button" class="banner-preset-swatch" data-preset="estrelas" style="width:64px;height:64px;border-radius:12px;border:2px solid transparent;cursor:pointer;background:url('icons/banners/estrelas.jpg') center/cover no-repeat,linear-gradient(135deg,#efe6d3 0%,#c9a86a 100%)" title="Estrelas"></button>
           </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <label for="bannerImagemInput" class="btn btn-outline btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+              <i class="bi bi-image"></i> Enviar imagem personalizada
+            </label>
+            <button id="btnRemoverBannerImagem" class="btn btn-ghost btn-sm" style="color:var(--danger);display:none">
+              <i class="bi bi-trash"></i> Remover imagem
+            </button>
+            <input type="file" id="bannerImagemInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+          </div>
+          <div style="font-size:.78rem;color:var(--text2);margin-top:8px">JPG, PNG ou WEBP · máx. 2 MB</div>
         </div>
       </div>
 
@@ -2016,6 +2124,7 @@ body {
     </div>
     <div class="form-group"><label class="form-label">Nome *</label><input class="form-control" id="clienteNome" placeholder="Nome completo" /></div>
     <div class="form-group"><label class="form-label">E-mail *</label><input class="form-control" id="clienteEmail" placeholder="email@exemplo.com" /></div>
+    <div class="form-group"><label class="form-label">Telefone</label><input class="form-control" id="clienteTelefone" placeholder="(11) 99999-9999" /></div>
     <div class="form-group">
       <label class="form-label">Tipo de ensaio</label>
       <select class="form-select" id="clienteTipo">
@@ -2386,6 +2495,317 @@ var API = (["localhost","127.0.0.1",""].indexOf(location.hostname) >= 0)
   }
 
   loadDashboard();
+})();
+
+/* ============================================================
+   4a-2. GRÁFICOS DO DASHBOARD — faturamento, ensaios por dia,
+   status de pagamentos e de ensaios. SVG desenhado à mão (sem
+   dependência externa), com hover/tooltip acessível.
+   ============================================================ */
+(function initDashboardCharts() {
+  document.addEventListener("pagechange", function (e) {
+    if (e.detail.page !== "dashboard") return;
+    loadCharts();
+  });
+
+  function authHeaders() {
+    var token = localStorage.getItem("cm-token");
+    return token ? { "Authorization": "Bearer " + token } : {};
+  }
+
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function fmtBRL(v) {
+    return "R$ " + (v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // ── Tooltip (compartilhado por todos os gráficos) ──────────
+  var tooltip = document.createElement("div");
+  tooltip.className = "viz-tooltip";
+  document.body.appendChild(tooltip);
+
+  function showTooltip(x, y, rowsHtml) {
+    tooltip.innerHTML = "";
+    rowsHtml.forEach(function (row) {
+      var div = document.createElement("div");
+      div.className = "viz-tt-row";
+      if (row.color) {
+        var key = document.createElement("span");
+        key.className = "viz-tt-key";
+        key.style.background = row.color;
+        div.appendChild(key);
+      }
+      var label = document.createTextNode(row.label + ": ");
+      var strong = document.createElement("span");
+      strong.className = "viz-tt-value";
+      strong.textContent = row.value;
+      div.appendChild(label);
+      div.appendChild(strong);
+      tooltip.appendChild(div);
+    });
+    tooltip.style.left = x + "px";
+    tooltip.style.top  = y + "px";
+    tooltip.classList.add("show");
+  }
+  function hideTooltip() { tooltip.classList.remove("show"); }
+
+  // ── Datas: últimos 7 dias (hoje incluso) ───────────────────
+  function last7Days() {
+    var days = [];
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date();
+      d.setHours(0,0,0,0);
+      d.setDate(d.getDate() - i);
+      days.push(d);
+    }
+    return days;
+  }
+  function dateKey(d) {
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+  function dayLabel(d) { return String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0"); }
+
+  function aggregateByDay(items, dateField, valueFn, filterFn) {
+    var days = last7Days();
+    var map = {};
+    days.forEach(function (d) { map[dateKey(d)] = 0; });
+    items.forEach(function (it) {
+      if (filterFn && !filterFn(it)) return;
+      var key = (it[dateField] || "").slice(0, 10);
+      if (key in map) map[key] += valueFn(it);
+    });
+    return days.map(function (d) { return { label: dayLabel(d), value: map[dateKey(d)] }; });
+  }
+
+  function aggregateStatus(items, field, order, colorVars) {
+    var counts = {};
+    items.forEach(function (it) {
+      var v = it[field] || "—";
+      counts[v] = (counts[v] || 0) + 1;
+    });
+    return order
+      .filter(function (k) { return counts[k] > 0; })
+      .map(function (k) { return { label: k, value: counts[k], color: cssVar(colorVars[k]) }; });
+  }
+
+  // ── Gráfico de linha (com área) ─────────────────────────────
+  function renderLine(containerId, data, valueFmt) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var total = data.reduce(function (a, d) { return a + d.value; }, 0);
+    if (total === 0) { el.innerHTML = '<div class="viz-empty">Sem dados nos últimos 7 dias.</div>'; return; }
+
+    var W = 560, H = 200, padL = 8, padR = 8, padT = 16, padB = 28;
+    var innerW = W - padL - padR, innerH = H - padT - padB;
+    var maxVal = Math.max.apply(null, data.map(function (d) { return d.value; })) || 1;
+    var stepX = innerW / (data.length - 1);
+
+    function xAt(i) { return padL + i * stepX; }
+    function yAt(v) { return padT + innerH - (v / maxVal) * innerH; }
+
+    var linePts = data.map(function (d, i) { return xAt(i) + "," + yAt(d.value); }).join(" ");
+    var areaPath = "M" + xAt(0) + "," + (padT + innerH) +
+      " " + data.map(function (d, i) { return "L" + xAt(i) + "," + yAt(d.value); }).join(" ") +
+      " L" + xAt(data.length - 1) + "," + (padT + innerH) + " Z";
+
+    var gridLines = "";
+    for (var g = 0; g <= 3; g++) {
+      var gy = padT + (innerH / 3) * g;
+      gridLines += '<line class="viz-gridline" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + gy + '" y2="' + gy + '"/>';
+    }
+
+    var labels = data.map(function (d, i) {
+      if (i % 2 !== 0 && i !== data.length - 1) return "";
+      return '<text class="viz-axis-label" x="' + xAt(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + d.label + '</text>';
+    }).join("");
+
+    var last = data[data.length - 1];
+    var lastLabel = '<text x="' + xAt(data.length-1) + '" y="' + (yAt(last.value) - 12) + '" text-anchor="end" style="fill:var(--text);font-weight:700;font-size:12px">' + valueFmt(last.value) + '</text>';
+
+    var dots = data.map(function (d, i) {
+      return '<circle class="viz-dot" cx="' + xAt(i) + '" cy="' + yAt(d.value) + '" r="4" opacity="0"/>';
+    }).join("");
+
+    var hits = data.map(function (d, i) {
+      return '<rect class="viz-hit" data-i="' + i + '" x="' + (xAt(i) - stepX/2) + '" y="' + padT + '" width="' + stepX + '" height="' + innerH + '"/>';
+    }).join("");
+
+    el.innerHTML =
+      '<svg class="viz-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
+        gridLines +
+        '<path class="viz-area" d="' + areaPath + '"/>' +
+        '<polyline class="viz-line" points="' + linePts + '"/>' +
+        '<line class="viz-crosshair" id="' + containerId + 'Crosshair" x1="0" x2="0" y1="' + padT + '" y2="' + (padT+innerH) + '"/>' +
+        dots +
+        labels +
+        lastLabel +
+        hits +
+      '</svg>';
+
+    var svg = el.querySelector("svg");
+    var crosshair = el.querySelector("#" + containerId + "Crosshair");
+    var dotEls = el.querySelectorAll(".viz-dot");
+
+    el.querySelectorAll(".viz-hit").forEach(function (hit) {
+      hit.addEventListener("pointermove", function (ev) {
+        var i = parseInt(hit.getAttribute("data-i"), 10);
+        var d = data[i];
+        crosshair.setAttribute("x1", xAt(i)); crosshair.setAttribute("x2", xAt(i));
+        crosshair.style.opacity = 1;
+        dotEls.forEach(function (dot, di) { dot.setAttribute("opacity", di === i ? 1 : 0); });
+        var rect = svg.getBoundingClientRect();
+        var scale = rect.width / W;
+        showTooltip(rect.left + xAt(i) * scale, rect.top + yAt(d.value) * scale + window.scrollY, [
+          { label: d.label, value: valueFmt(d.value), color: cssVar("--accent-text") }
+        ]);
+      });
+      hit.addEventListener("pointerleave", function () {
+        crosshair.style.opacity = 0;
+        dotEls.forEach(function (dot) { dot.setAttribute("opacity", 0); });
+        hideTooltip();
+      });
+    });
+  }
+
+  // ── Gráfico de barras ────────────────────────────────────────
+  function renderBar(containerId, data, valueFmt) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var total = data.reduce(function (a, d) { return a + d.value; }, 0);
+    if (total === 0) { el.innerHTML = '<div class="viz-empty">Sem dados nos últimos 7 dias.</div>'; return; }
+
+    var W = 560, H = 200, padL = 8, padR = 8, padT = 16, padB = 28;
+    var innerW = W - padL - padR, innerH = H - padT - padB;
+    var maxVal = Math.max.apply(null, data.map(function (d) { return d.value; })) || 1;
+    var slot = innerW / data.length;
+    var barW = Math.min(24, slot * 0.5);
+
+    function yAt(v) { return padT + innerH - (v / maxVal) * innerH; }
+
+    var gridLines = "";
+    for (var g = 0; g <= 3; g++) {
+      var gy = padT + (innerH / 3) * g;
+      gridLines += '<line class="viz-gridline" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + gy + '" y2="' + gy + '"/>';
+    }
+
+    var maxIdx = data.reduce(function (best, d, i) { return d.value > data[best].value ? i : best; }, 0);
+
+    var bars = data.map(function (d, i) {
+      var cx = padL + slot * i + slot / 2;
+      var barH = (d.value / maxVal) * innerH;
+      var y = padT + innerH - barH;
+      var r = Math.min(4, barH);
+      var label = (i === maxIdx && d.value > 0)
+        ? '<text x="' + cx + '" y="' + (y - 8) + '" text-anchor="middle" style="fill:var(--text);font-weight:700;font-size:12px">' + valueFmt(d.value) + '</text>'
+        : "";
+      return '<rect class="viz-bar" data-i="' + i + '" x="' + (cx - barW/2) + '" y="' + y + '" width="' + barW + '" height="' + Math.max(barH,1) + '" rx="' + r + '"/>' + label;
+    }).join("");
+
+    var labels = data.map(function (d, i) {
+      var cx = padL + slot * i + slot / 2;
+      return '<text class="viz-axis-label" x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle">' + d.label + '</text>';
+    }).join("");
+
+    el.innerHTML = '<svg class="viz-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' + gridLines + bars + labels + '</svg>';
+
+    var svg = el.querySelector("svg");
+    el.querySelectorAll(".viz-bar").forEach(function (bar) {
+      bar.addEventListener("pointerenter", function () {
+        bar.classList.add("is-active");
+        var i = parseInt(bar.getAttribute("data-i"), 10);
+        var d = data[i];
+        var rect = svg.getBoundingClientRect();
+        var scale = rect.width / W;
+        var bx = parseFloat(bar.getAttribute("x")) + barW/2;
+        var by = parseFloat(bar.getAttribute("y"));
+        showTooltip(rect.left + bx * scale, rect.top + by * scale + window.scrollY, [
+          { label: d.label, value: valueFmt(d.value), color: cssVar("--accent-text") }
+        ]);
+      });
+      bar.addEventListener("pointerleave", function () { bar.classList.remove("is-active"); hideTooltip(); });
+    });
+  }
+
+  // ── Donut ────────────────────────────────────────────────────
+  function renderDonut(containerId, data, centerLabel) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var total = data.reduce(function (a, d) { return a + d.value; }, 0);
+    if (total === 0) { el.innerHTML = '<div class="viz-empty">Sem dados ainda.</div>'; return; }
+
+    var size = 180, cx = size/2, cy = size/2, r = 62, strokeW = 22;
+    var circumference = 2 * Math.PI * r;
+    var gapDeg = 3; // pequeno respiro entre segmentos (spacer, não borda)
+    var offset = 0;
+
+    var segs = data.map(function (d, i) {
+      var frac = d.value / total;
+      var segLen = Math.max(circumference * frac - gapDeg, 1);
+      var dasharray = segLen + " " + (circumference - segLen);
+      var rotate = (offset / circumference) * 360 - 90;
+      offset += circumference * frac;
+      return '<circle class="viz-donut-seg" data-i="' + i + '" cx="' + cx + '" cy="' + cy + '" r="' + r + '" ' +
+        'fill="none" stroke="' + d.color + '" stroke-width="' + strokeW + '" stroke-dasharray="' + dasharray + '" ' +
+        'stroke-dashoffset="0" transform="rotate(' + rotate + ' ' + cx + ' ' + cy + ')" stroke-linecap="butt"/>';
+    }).join("");
+
+    var legend = data.map(function (d) {
+      return '<div class="viz-legend-item"><span class="viz-legend-swatch" style="background:' + d.color + '"></span>' + d.label + ' · ' + d.value + '</div>';
+    }).join("");
+
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">' +
+        '<svg class="viz-svg" style="width:180px;height:180px;flex-shrink:0" viewBox="0 0 ' + size + ' ' + size + '">' +
+          segs +
+          '<text class="viz-donut-center-value" x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle">' + total + '</text>' +
+          '<text class="viz-donut-center-label" x="' + cx + '" y="' + (cy + 16) + '" text-anchor="middle">' + centerLabel + '</text>' +
+        '</svg>' +
+        '<div class="viz-legend" style="margin-top:0;flex-direction:column;gap:8px">' + legend + '</div>' +
+      '</div>';
+
+    var svg = el.querySelector("svg");
+    el.querySelectorAll(".viz-donut-seg").forEach(function (seg, i) {
+      seg.addEventListener("pointerenter", function (ev) {
+        seg.classList.add("is-active");
+        var d = data[i];
+        var pct = Math.round((d.value / total) * 100);
+        var rect = svg.getBoundingClientRect();
+        showTooltip(rect.left + rect.width/2, rect.top + window.scrollY - 6, [
+          { label: d.label, value: d.value + " (" + pct + "%)", color: d.color }
+        ]);
+      });
+      seg.addEventListener("pointerleave", function () { seg.classList.remove("is-active"); hideTooltip(); });
+    });
+  }
+
+  function loadCharts() {
+    var fetchEnsaios = fetch(API + "/ensaios", { headers: authHeaders() }).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; });
+    var fetchPagamentos = fetch(API + "/pagamentos", { headers: authHeaders() }).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; });
+
+    Promise.all([fetchEnsaios, fetchPagamentos]).then(function (results) {
+      var ensaios = results[0], pagamentos = results[1];
+
+      var faturamento = aggregateByDay(pagamentos, "dataPagamento",
+        function (p) { return parseFloat(p.valor) || 0; },
+        function (p) { return p.status === "Pago"; });
+      renderLine("vizFaturamento", faturamento, fmtBRL);
+
+      var ensaiosDia = aggregateByDay(ensaios, "dataHora", function () { return 1; }, null);
+      renderBar("vizEnsaiosDia", ensaiosDia, function (v) { return v + (v === 1 ? " ensaio" : " ensaios"); });
+
+      var statusPag = aggregateStatus(pagamentos, "status", ["Pago", "Pendente", "Cancelado"],
+        { "Pago": "--success", "Pendente": "--warning", "Cancelado": "--danger" });
+      renderDonut("vizStatusPagamentos", statusPag, "pagamentos");
+
+      var statusEns = aggregateStatus(ensaios, "status", ["Agendado", "Realizado", "Cancelado"],
+        { "Agendado": "--accent-text", "Realizado": "--success", "Cancelado": "--danger" });
+      renderDonut("vizStatusEnsaios", statusEns, "ensaios");
+    });
+  }
+
+  loadCharts();
 })();
 
 /* ============================================================
@@ -2804,10 +3224,68 @@ function fmtDate(s) {
           (e.contrato ? '<span><i class="bi bi-file-text"></i>' + e.contrato + '</span>' : '') +
           '<span><i class="bi bi-currency-dollar"></i>' + fmtBRL(e.valor) + '</span>' +
           '<span class="badge ' + (statusPgto==="Pago"?"badge-success":"badge-warning") + '">' + statusPgto + '</span>' +
-        '</div>';
+          '<span class="badge">' + (e.status||"Agendado") + '</span>' +
+        '</div>' +
+        '<button class="btn btn-ghost btn-sm btn-editar-ensaio" data-id="' + e.id + '" style="margin-top:8px">Editar</button>';
       container.appendChild(el);
     });
   }
+
+  // ── Editar ensaio ────────────────────────────────────────
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".btn-editar-ensaio");
+    if (!btn) return;
+    var en = ensaiosTodos.find(function (x) { return x.id === parseInt(btn.dataset.id); });
+    if (!en) return;
+    var ex = document.getElementById("modalEditarEnsaio"); if (ex) ex.remove();
+    var m = document.createElement("div");
+    m.id = "modalEditarEnsaio"; m.className = "modal-overlay";
+    var dh = en.dataHora || "";
+    var dataVal = dh.slice(0, 16); // yyyy-MM-ddTHH:mm p/ datetime-local
+    m.innerHTML =
+      '<div class="modal">' +
+        '<div class="modal-header"><div class="modal-title">Editar ensaio</div>' +
+        '<button class="btn-icon" id="btnFecharEditEnsaio"><i class="bi bi-x-lg"></i></button></div>' +
+        '<div class="form-group"><label class="form-label">Título *</label><input class="form-control" id="editEnsaioTitulo" value="' + (en.titulo||"").replace(/"/g,"&quot;") + '" /></div>' +
+        '<div class="form-group"><label class="form-label">Data e hora *</label><input type="datetime-local" class="form-control" id="editEnsaioData" value="' + dataVal + '" /></div>' +
+        '<div class="form-group"><label class="form-label">Local</label><input class="form-control" id="editEnsaioLocal" value="' + (en.local||"").replace(/"/g,"&quot;") + '" /></div>' +
+        '<div class="form-group"><label class="form-label">Valor</label><input class="form-control" id="editEnsaioValor" value="' + (en.valor||0) + '" /></div>' +
+        '<div class="form-group"><label class="form-label">Status</label>' +
+        '<select class="form-select" id="editEnsaioStatus">' +
+          ['Agendado','Realizado','Cancelado'].map(function(s){ return '<option value="'+s+'"'+(en.status===s?' selected':'')+'>'+s+'</option>'; }).join("") +
+        '</select></div>' +
+        '<div style="display:flex;gap:10px;justify-content:flex-end">' +
+          '<button class="btn btn-ghost" id="btnCancelarEditEnsaio">Cancelar</button>' +
+          '<button class="btn btn-primary" id="btnSalvarEditEnsaio" data-id="' + en.id + '">Salvar</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(m);
+    requestAnimationFrame(function () { m.classList.add("open"); });
+    m.querySelector("#btnFecharEditEnsaio").onclick = function () { m.remove(); };
+    m.querySelector("#btnCancelarEditEnsaio").onclick = function () { m.remove(); };
+    m.addEventListener("click", function (ev) { if (ev.target === m) m.remove(); });
+    m.querySelector("#btnSalvarEditEnsaio").addEventListener("click", function () {
+      var id = this.dataset.id;
+      var titulo = document.getElementById("editEnsaioTitulo").value.trim();
+      var dataHora = document.getElementById("editEnsaioData").value;
+      if (!titulo || !dataHora) { showToast("Preencha título e data.", "error"); return; }
+      var valorNum = parseFloat((document.getElementById("editEnsaioValor").value||"0").replace(",",".")) || 0;
+      this.disabled = true; this.textContent = "Salvando...";
+      fetch(API + "/ensaios/" + id, {
+        method: "PUT", headers: authHdr(),
+        body: JSON.stringify({
+          titulo: titulo,
+          dataHora: dataHora.length === 16 ? dataHora + ":00" : dataHora,
+          local: document.getElementById("editEnsaioLocal").value.trim(),
+          valor: valorNum,
+          status: document.getElementById("editEnsaioStatus").value
+        })
+      })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function () { m.remove(); showToast("Ensaio atualizado!", "success"); loadEnsaios(); })
+      .catch(function () { showToast("Erro ao atualizar ensaio.", "error"); });
+    });
+  });
 })();
 
 /* ============================================================
@@ -2856,7 +3334,7 @@ function fmtDate(s) {
         '</div>' +
       '</div>';
     document.body.appendChild(m);
-    m.style.display = "flex";
+    requestAnimationFrame(function(){ m.classList.add("open"); });
     m.querySelector("#btnFecharEditCliente").onclick = function(){ m.remove(); };
     m.querySelector("#btnCancelarEditCliente").onclick = function(){ m.remove(); };
     m.addEventListener("click", function(e){ if(e.target===m) m.remove(); });
@@ -3445,40 +3923,151 @@ function fmtDate(s) {
   }
 
   function initAvatarDisplay() {
-    var saved = localStorage.getItem("cm-avatar");
-    var nome = user && user.nome;
-    if (saved) {
-      applyAvatar(saved);
+    var fotoUrl = user && user.fotoUrl;
+    if (fotoUrl) {
+      applyAvatar(fotoUrl);
     } else {
-      applyInitials(getInitials(nome));
+      applyInitials(getInitials(user && user.nome));
     }
   }
 
   initAvatarDisplay();
 
-  // Upload de foto de perfil
+  // Foto de perfil: enviada pro servidor (POST /api/auth/foto) — antes ficava
+  // só no localStorage do navegador, então não aparecia em outro aparelho
+  // (ex: enviada no computador, sumia ao abrir pelo celular).
   var fotoInput = document.getElementById("fotoPerfilInput");
   if (fotoInput) {
     fotoInput.addEventListener("change", function() {
       var file = this.files[0];
       if (!file) return;
       if (file.size > 2 * 1024 * 1024) { showToast("Foto muito grande. Máx. 2 MB.", "error"); return; }
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        localStorage.setItem("cm-avatar", e.target.result);
-        applyAvatar(e.target.result);
+
+      var formData = new FormData();
+      formData.append("arquivo", file);
+      fetch(API + "/auth/foto", {
+        method: "POST",
+        headers: { "Authorization": authHdr()["Authorization"] },
+        body: formData
+      })
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(atualizado) {
+        user = atualizado;
+        localStorage.setItem("cm-user", JSON.stringify(user));
+        applyAvatar(atualizado.fotoUrl);
         showToast("Foto de perfil atualizada!", "success");
-      };
-      reader.readAsDataURL(file);
+      })
+      .catch(function() { showToast("Erro ao enviar a foto. Tente novamente.", "error"); });
     });
   }
 
   var btnRemover = document.getElementById("btnRemoverFoto");
   if (btnRemover) {
     btnRemover.addEventListener("click", function() {
-      localStorage.removeItem("cm-avatar");
-      applyInitials(getInitials(user && user.nome));
-      showToast("Foto removida.", "success");
+      fetch(API + "/auth/foto", { method: "DELETE", headers: authHdr() })
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function(atualizado) {
+          user = atualizado;
+          localStorage.setItem("cm-user", JSON.stringify(user));
+          applyInitials(getInitials(user && user.nome));
+          showToast("Foto removida.", "success");
+        })
+        .catch(function() { showToast("Erro ao remover a foto.", "error"); });
+    });
+  }
+
+  // ── Banner do portfólio: presets com foto (fallback em gradiente
+  // enquanto a imagem não é salva em icons/banners/) ou imagem própria.
+  // Um véu escuro semitransparente garante contraste do texto branco
+  // sobre qualquer foto clara.
+  var BANNER_SCRIM = "linear-gradient(rgba(15,10,25,.32),rgba(15,10,25,.32))";
+  var BANNER_PRESETS = {
+    flores:   { img: "icons/banners/flores.jpg",   fallback: "linear-gradient(135deg,#f7d9d0 0%,#c97b8b 100%)" },
+    ceu:      { img: "icons/banners/ceu.jpg",       fallback: "linear-gradient(135deg,#cdd7ea 0%,#8fa3c9 100%)" },
+    vintage:  { img: "icons/banners/vintage.jpg",   fallback: "linear-gradient(135deg,#d9b7a0 0%,#8a5a45 100%)" },
+    estrelas: { img: "icons/banners/estrelas.jpg",  fallback: "linear-gradient(135deg,#efe6d3 0%,#c9a86a 100%)" }
+  };
+
+  function applyBanner(u) {
+    var banner = document.getElementById("portfolioBanner");
+    if (banner) {
+      if (u && u.bannerUrl) {
+        banner.style.background = BANNER_SCRIM + ", url('" + u.bannerUrl + "') center/cover no-repeat";
+      } else {
+        var preset = BANNER_PRESETS[(u && u.bannerPreset)] || BANNER_PRESETS.flores;
+        banner.style.background = BANNER_SCRIM + ", url('" + preset.img + "') center/cover no-repeat, " + preset.fallback;
+      }
+    }
+    var selecionado = (u && !u.bannerUrl) ? ((u.bannerPreset) || "flores") : null;
+    document.querySelectorAll(".banner-preset-swatch").forEach(function(btn) {
+      btn.style.borderColor = (btn.getAttribute("data-preset") === selecionado) ? "var(--accent-text)" : "transparent";
+    });
+    var btnRemBanner = document.getElementById("btnRemoverBannerImagem");
+    if (btnRemBanner) btnRemBanner.style.display = (u && u.bannerUrl) ? "" : "none";
+  }
+
+  applyBanner(user);
+
+  document.querySelectorAll(".banner-preset-swatch").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      fetch(API + "/auth/banner", {
+        method: "PUT",
+        headers: authHdr(),
+        body: JSON.stringify({ preset: btn.getAttribute("data-preset") })
+      })
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(atualizado) {
+        user = atualizado;
+        localStorage.setItem("cm-user", JSON.stringify(user));
+        applyBanner(user);
+        showToast("Banner atualizado!", "success");
+      })
+      .catch(function() { showToast("Erro ao atualizar o banner.", "error"); });
+    });
+  });
+
+  var bannerInput = document.getElementById("bannerImagemInput");
+  if (bannerInput) {
+    bannerInput.addEventListener("change", function() {
+      var file = this.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) { showToast("Imagem muito grande. Máx. 2 MB.", "error"); return; }
+
+      var formData = new FormData();
+      formData.append("arquivo", file);
+      fetch(API + "/auth/banner-imagem", {
+        method: "POST",
+        headers: { "Authorization": authHdr()["Authorization"] },
+        body: formData
+      })
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(atualizado) {
+        user = atualizado;
+        localStorage.setItem("cm-user", JSON.stringify(user));
+        applyBanner(user);
+        showToast("Banner atualizado!", "success");
+      })
+      .catch(function() { showToast("Erro ao enviar a imagem.", "error"); });
+    });
+  }
+
+  var btnRemoverBanner = document.getElementById("btnRemoverBannerImagem");
+  if (btnRemoverBanner) {
+    btnRemoverBanner.addEventListener("click", function() {
+      var presetVolta = (user && user.bannerPreset && user.bannerPreset !== "custom" && BANNER_PRESETS[user.bannerPreset]) ? user.bannerPreset : "flores";
+      fetch(API + "/auth/banner", {
+        method: "PUT",
+        headers: authHdr(),
+        body: JSON.stringify({ preset: presetVolta })
+      })
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(atualizado) {
+        user = atualizado;
+        localStorage.setItem("cm-user", JSON.stringify(user));
+        applyBanner(user);
+        showToast("Imagem removida.", "success");
+      })
+      .catch(function() { showToast("Erro ao remover a imagem.", "error"); });
     });
   }
 
@@ -3529,10 +4118,9 @@ function fmtDate(s) {
       var pBio = document.getElementById("portfolioBio");
       if (pBio) pBio.textContent = user.bio;
     }
-    var saved = localStorage.getItem("cm-avatar");
-    if (saved) {
+    if (user.fotoUrl) {
       var portfolioAvatar = document.getElementById("portfolioAvatar");
-      if (portfolioAvatar) portfolioAvatar.src = saved;
+      if (portfolioAvatar) portfolioAvatar.src = user.fotoUrl;
     }
   }
 
@@ -3563,9 +4151,9 @@ function fmtDate(s) {
       }
 
       function refreshPortfolio() {
-        if (!localStorage.getItem("cm-avatar")) {
+        if (!(user && user.fotoUrl)) {
           var pAvatar = document.getElementById("portfolioAvatar");
-          if (pAvatar) pAvatar.src = "https://via.placeholder.com/120?text=Foto";
+          if (pAvatar) pAvatar.src = "/icons/avatar-placeholder.png";
         }
         var pNome  = document.getElementById("portfolioNome");  if (pNome)  pNome.textContent  = nome || (user&&user.nome) || "Fotógrafo";
         var pBio   = document.getElementById("portfolioBio");   if (pBio)   pBio.textContent   = bio || "Atualize sua bio em Configurações para apresentar melhor seu trabalho.";
@@ -3595,6 +4183,77 @@ function fmtDate(s) {
         refreshPortfolio();
         showToast("Perfil salvo localmente.", "success");
       }
+    });
+  }
+
+  // Bloco de senha recolhido por padrão (estilo Windows: mostra só um
+  // botão "Alterar" pequeno; clicar expande os campos).
+  var senhaExpandida = document.getElementById("senhaExpandida");
+  var btnAbrirSenha  = document.getElementById("btnAbrirAlterarSenha");
+  function fecharSenhaExpandida() {
+    if (!senhaExpandida) return;
+    senhaExpandida.style.display = "none";
+    document.getElementById("senhaAtual").value = "";
+    document.getElementById("senhaNova").value = "";
+    document.getElementById("senhaNovaConfirma").value = "";
+    document.getElementById("senhaErro").style.display = "none";
+  }
+  if (btnAbrirSenha && senhaExpandida) {
+    btnAbrirSenha.addEventListener("click", function() {
+      senhaExpandida.style.display = senhaExpandida.style.display === "none" ? "block" : "none";
+    });
+  }
+  var btnCancelarSenha = document.getElementById("btnCancelarAlterarSenha");
+  if (btnCancelarSenha) btnCancelarSenha.addEventListener("click", fecharSenhaExpandida);
+
+  var btnSenha = document.getElementById("btnSalvarNovaSenha");
+  if (btnSenha) {
+    btnSenha.addEventListener("click", function() {
+      var atual    = (document.getElementById("senhaAtual")||{}).value||"";
+      var nova     = (document.getElementById("senhaNova")||{}).value||"";
+      var confirma = (document.getElementById("senhaNovaConfirma")||{}).value||"";
+      var erro     = document.getElementById("senhaErro");
+      erro.style.display = "none";
+
+      if (!atual || !nova || !confirma) {
+        erro.textContent = "Preencha todos os campos.";
+        erro.style.display = "block";
+        return;
+      }
+      if (nova.length < 8) {
+        erro.textContent = "A nova senha deve ter pelo menos 8 caracteres.";
+        erro.style.display = "block";
+        return;
+      }
+      if (nova !== confirma) {
+        erro.textContent = "As senhas não coincidem.";
+        erro.style.display = "block";
+        return;
+      }
+
+      btnSenha.disabled = true;
+      fetch(API + "/auth/senha", {
+        method: "PUT",
+        headers: authHdr(),
+        body: JSON.stringify({ senhaAtual: atual, novaSenha: nova })
+      })
+      .then(function(r) {
+        if (r.ok) return null;
+        return r.json().catch(function(){ return {}; }).then(function(body) {
+          throw new Error(body.mensagem || "Não foi possível alterar a senha.");
+        });
+      })
+      .then(function() {
+        showToast("Senha alterada com sucesso!", "success");
+        fecharSenhaExpandida();
+      })
+      .catch(function(err) {
+        erro.textContent = err.message || "Não foi possível alterar a senha.";
+        erro.style.display = "block";
+      })
+      .finally(function() {
+        btnSenha.disabled = false;
+      });
     });
   }
 })();
@@ -3667,51 +4326,95 @@ function fmtDate(s) {
     .then(function(d){ if(d && d.content) el.textContent = "\u201c" + d.content + "\u201d — " + d.author; else throw 0; })
     .catch(function(){ el.textContent = fallback[Math.floor(Math.random()*fallback.length)]; });
 })();
-
 </script>
 <script>
-  // Botões de tema nas configurações
-  document.getElementById("setLight").addEventListener("click", function() {
-    document.documentElement.setAttribute("data-theme","light");
-    localStorage.setItem("cm-theme","light");
-    document.getElementById("themeIcon").className = "bi bi-moon-fill";
-    showToast("☀️ Tema claro ativado!", "success");
-  });
-  document.getElementById("setDark").addEventListener("click", function() {
-    document.documentElement.setAttribute("data-theme","dark");
-    localStorage.setItem("cm-theme","dark");
-    document.getElementById("themeIcon").className = "bi bi-sun-fill";
-    showToast("🌙 Tema escuro ativado!", "success");
+  // Portfólio: carrega, envia e remove imagens de verdade via API (antes só
+  // criava preview local com URL.createObjectURL — nunca salvava no servidor,
+  // por isso as imagens "somiam" ao reabrir o app em outro aparelho/sessão).
+  var portfolioImagens = [];
+
+  function renderPortfolioGrid() {
+    var grid  = document.getElementById("portfolioGrid");
+    var count = document.getElementById("portfolioCount");
+    if (count) count.textContent = portfolioImagens.length + (portfolioImagens.length === 1 ? " imagem" : " imagens");
+
+    if (!grid) return;
+    if (portfolioImagens.length === 0) {
+      grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><i class="bi bi-image" style="font-size:2.5rem;margin-bottom:12px;display:block"></i><strong>Nenhuma imagem no portfólio</strong><p style="font-size:.82rem;margin-top:4px">Envie suas fotos para começar a montar a vitrine pública do fotógrafo.</p></div>';
+      return;
+    }
+    grid.innerHTML = '<div class="portfolio-grid" id="portfolioGridInner"></div>';
+    var inner = document.getElementById("portfolioGridInner");
+    portfolioImagens.forEach(function(img) {
+      var div = document.createElement("div");
+      div.className = "portfolio-thumb";
+      div.innerHTML =
+        '<img src="' + img.url + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block"/>' +
+        '<button class="btn-icon" data-del-portfolio="' + img.id + '" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none"><i class="bi bi-trash"></i></button>';
+      inner.appendChild(div);
+    });
+  }
+
+  function carregarPortfolio() {
+    fetch(API + "/portfolio", { headers: authHdr() })
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .then(function(data) {
+        portfolioImagens = Array.isArray(data) ? data : [];
+        renderPortfolioGrid();
+      })
+      .catch(function() { portfolioImagens = []; renderPortfolioGrid(); });
+  }
+
+  document.addEventListener("pagechange", function(e) {
+    if (e.detail.page === "portfolio") carregarPortfolio();
   });
 
-  // Upload portfólio (preview local)
+  document.addEventListener("click", function(e) {
+    var delBtn = e.target.closest("[data-del-portfolio]");
+    if (!delBtn) return;
+    fetch(API + "/portfolio/" + delBtn.getAttribute("data-del-portfolio"), { method: "DELETE", headers: authHdr() })
+      .then(function() { showToast("Imagem removida.", "success"); carregarPortfolio(); })
+      .catch(function() { showToast("Erro ao remover imagem.", "error"); });
+  });
+
   document.getElementById("uploadArea").addEventListener("click", function() {
     var inp = document.createElement("input");
-    inp.type = "file"; inp.multiple = true; inp.accept = "image/*";
+    inp.type = "file"; inp.multiple = true; inp.accept = "image/jpeg,image/png,image/webp";
     inp.addEventListener("change", function() {
-      var grid = document.getElementById("portfolioGrid");
       if (!inp.files.length) return;
-      grid.innerHTML = '<div class="portfolio-grid" id="portfolioGridInner"></div>';
-      var inner = document.getElementById("portfolioGridInner");
-      Array.from(inp.files).forEach(function(file) {
-        var url = URL.createObjectURL(file);
-        var div = document.createElement("div");
-        div.className = "portfolio-thumb";
-        div.style.backgroundImage = "url(" + url + ")";
-        div.style.backgroundSize = "cover";
-        div.style.backgroundPosition = "center";
-        inner.appendChild(div);
+      var label = document.getElementById("uploadAreaLabel");
+      var files = Array.from(inp.files);
+      var enviadas = 0;
+      if (label) label.textContent = "Enviando...";
+
+      var envios = files.map(function(file) {
+        var formData = new FormData();
+        formData.append("arquivo", file);
+        return fetch(API + "/portfolio/upload", {
+          method: "POST",
+          headers: { "Authorization": authHdr()["Authorization"] },
+          body: formData
+        }).then(function(r) { if (r.ok) enviadas++; });
       });
-      showToast("✅ " + inp.files.length + " imagem(ns) adicionada(s)!", "success");
+
+      Promise.all(envios).then(function() {
+        if (label) label.textContent = "Enviar imagens";
+        showToast("✅ " + enviadas + " de " + files.length + " imagem(ns) enviada(s)!", enviadas === files.length ? "success" : "error");
+        carregarPortfolio();
+      });
     });
     inp.click();
   });
 
-  // Limpar portfólio
   document.getElementById("btnLimparPortfolio").addEventListener("click", function() {
-    document.getElementById("portfolioGrid").innerHTML =
-      '<div style="text-align:center;padding:40px;color:var(--text2)"><i class="bi bi-image" style="font-size:2.5rem;margin-bottom:12px;display:block"></i><strong>Nenhuma imagem no portfólio</strong><p style="font-size:.82rem;margin-top:4px">Envie suas fotos para começar a montar a vitrine pública do fotógrafo.</p></div>';
-    showToast("Portfólio limpo.", "info");
+    if (portfolioImagens.length === 0) return;
+    if (!confirm("Remover todas as " + portfolioImagens.length + " imagens do portfólio?")) return;
+    Promise.all(portfolioImagens.map(function(img) {
+      return fetch(API + "/portfolio/" + img.id, { method: "DELETE", headers: authHdr() });
+    })).then(function() {
+      showToast("Portfólio limpo.", "info");
+      carregarPortfolio();
+    });
   });
 
   // Salvar agenda

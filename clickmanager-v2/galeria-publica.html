@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Galeria do ensaio – Click Manager</title>
-<link rel="icon" href="/icons/favicon.ico" />
+<link rel="icon" href="icons/favicon.ico" />
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -28,7 +28,8 @@ html{font-size:16px}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
 
 header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface)}
-header .logo{width:32px;height:32px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.95rem}
+header .logo{width:32px;height:32px;flex-shrink:0}
+header .logo img{width:100%;height:100%;object-fit:contain;display:block}
 header span{font-weight:700;font-size:.95rem}
 
 main{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
@@ -68,7 +69,7 @@ main{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
 <body>
 
 <header>
-  <div class="logo"><i class="bi bi-camera-fill"></i></div>
+  <div class="logo"><img src="icons/logo.svg" alt="Click Manager"/></div>
   <span>Click Manager</span>
 </header>
 

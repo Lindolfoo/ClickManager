@@ -4,12 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Criar conta – Click Manager</title>
-<link rel="icon" href="/icons/favicon.ico" />
-<link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/faviconsvg.svg" />
-<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
-<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
-<link rel="icon" type="image/png" sizes="192x192" href="/icons/android-chrome-192x192.png" />
-<link rel="icon" type="image/png" sizes="512x512" href="/icons/android-chrome-512x512.png" />
+<link rel="icon" href="icons/favicon.ico" />
+<link rel="icon" type="image/svg+xml" sizes="32x32" href="icons/faviconsvg.svg" />
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/android-chrome-192x192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icons/android-chrome-512x512.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -53,7 +53,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   background:linear-gradient(to bottom,rgba(8,4,18,.72) 0%,rgba(8,4,18,.38) 45%,rgba(8,4,18,.70) 100%);
 }
 .auth-brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:1.2rem;margin-bottom:44px}
-.auth-brand-icon{width:40px;height:40px;background:rgba(255,255,255,.22);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.05rem}
+.auth-brand-icon{width:40px;height:40px;background:rgba(255,255,255,.22);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.05rem}
 .auth-brand-icon.logo-image{background:transparent}
 .auth-brand-icon.logo-image img{width:100%;height:100%;object-fit:contain;border-radius:inherit;display:block}
 .auth-side h2{font-family:var(--font-serif);font-size:2.6rem;color:#fff;line-height:1.05;margin-bottom:18px;max-width:560px}
@@ -148,7 +148,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button { display: none !im
 
 /* nav */
 .auth-nav{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px solid var(--border);background:var(--surface)}
-.auth-nav .logo-image{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--accent)}
+.auth-nav .logo-image{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--accent)}
 .auth-nav .logo-image img{width:100%;height:100%;object-fit:contain;display:block}
 .btn-icon{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--ease)}
 .btn-icon:hover{background:var(--accent-mid);color:var(--accent);border-color:var(--accent)}
@@ -174,7 +174,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button { display: none !im
 <header class="auth-nav">
   <a href="index.html" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--text);text-decoration:none;font-size:.95rem">
     <div class="logo-image">
-      <img src="/icons/logo.svg" alt="Click Manager logo" />
+      <img src="icons/logo.svg" alt="Click Manager logo" />
     </div>
     Click Manager
   </a>
@@ -191,7 +191,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button { display: none !im
     </div>
     <div class="auth-side-content">
       <div class="auth-brand">
-        <div class="auth-brand-icon logo-image"><img src="/icons/logo.svg" alt="Click Manager logo"/></div>
+        <div class="auth-brand-icon logo-image"><img src="icons/logo.svg" alt="Click Manager logo"/></div>
         Click Manager
       </div>
       <h2>Comece de graça.<br><em>Cresça sem limites.</em></h2>

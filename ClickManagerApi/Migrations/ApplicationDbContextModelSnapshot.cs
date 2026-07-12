@@ -291,6 +291,15 @@ namespace ClickManagerApi.Migrations
                     b.Property<DateTime>("AtualizadoEm")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("BannerPreset")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("BannerUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("Bio")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -302,6 +311,10 @@ namespace ClickManagerApi.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FotoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Instagram")
                         .HasMaxLength(100)
@@ -338,6 +351,7 @@ namespace ClickManagerApi.Migrations
                         {
                             Id = 1,
                             AtualizadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            BannerPreset = "roxo",
                             CriadoEm = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "matheus@studio.com",
                             Nome = "Matheus",

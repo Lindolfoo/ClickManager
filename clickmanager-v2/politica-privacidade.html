@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Política de Privacidade – Click Manager</title>
-<link rel="icon" href="/icons/favicon.ico" />
+<link rel="icon" href="icons/favicon.ico" />
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -24,7 +24,8 @@ html{font-size:16px}
 body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.7}
 header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
 header a.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700}
-header .logo{width:32px;height:32px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:.95rem}
+header .logo{width:32px;height:32px;flex-shrink:0}
+header .logo img{width:100%;height:100%;object-fit:contain;display:block}
 header a.back{font-size:.85rem;color:var(--accent);text-decoration:none;font-weight:600}
 main{max-width:760px;margin:0 auto;padding:48px 24px 100px}
 .eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:10px}
@@ -40,7 +41,7 @@ strong{color:var(--text)}
 </head>
 <body>
 <header>
-  <a class="brand" href="index.html"><div class="logo"><i class="bi bi-camera-fill"></i></div>Click Manager</a>
+  <a class="brand" href="index.html"><div class="logo"><img src="icons/logo.svg" alt="Click Manager"/></div>Click Manager</a>
   <a class="back" href="index.html">← Voltar ao site</a>
 </header>
 <main>
