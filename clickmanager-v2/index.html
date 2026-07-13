@@ -434,7 +434,11 @@ img{max-width:100%;display:block}
   .hero-content{max-width:100%;padding-right:0;}
   .hero-mockup{max-width:100%;padding:0 0 10px;margin:0;display:flex;justify-content:center;}
   .mockup-card{margin:0 auto;}
-  .hero-photo-bg{display:none}
+  .hero-photo-bg img{object-position:center 20%}
+  .hero-photo-bg::after{
+    background:
+      linear-gradient(180deg, rgba(8,4,18,.8) 0%, rgba(8,4,18,.55) 35%, rgba(8,4,18,.85) 100%);
+  }
   .hero-proof{flex-direction:column;align-items:flex-start;gap:14px;}
   .hero-ctas{flex-direction:column;align-items:stretch;}
   .hero-ctas .btn{width:100%;}
