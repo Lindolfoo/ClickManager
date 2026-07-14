@@ -113,6 +113,31 @@ public class EnsaiosTests(WebFactory factory) : IClassFixture<WebFactory>
         Assert.Equal("Atualizado", body.GetProperty("titulo").GetString());
     }
 
+    // Regression: um fotógrafo não pode editar o ensaio de outro (IDOR)
+    [Fact]
+    public async Task Update_OtherUsersEnsaio_Returns404()
+    {
+        var (clientA, cidA) = await SetupAsync();
+        var createResp      = await clientA.PostAsJsonAsync("/api/ensaios", new
+        {
+            clienteId = cidA, titulo = "Original", dataHora = "2026-10-01T10:00:00", local = "Aqui", valor = 500
+        });
+        var id = (await createResp.Content.ReadFromJsonAsync<JsonElement>(J)).GetProperty("id").GetInt32();
+
+        var (clientB, _, _) = await AuthHelper.CreateAuth(factory);
+        var resp = await clientB.PutAsJsonAsync($"/api/ensaios/{id}", new
+        {
+            clienteId = cidA, titulo = "Hackeado", dataHora = "2026-10-02T10:00:00", local = "Ali", valor = 999
+        });
+
+        Assert.Equal(HttpStatusCode.NotFound, resp.StatusCode);
+
+        // Confirma que o dado original não foi alterado
+        var original = await (await clientA.GetAsync($"/api/ensaios/{id}"))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        Assert.Equal("Original", original.GetProperty("titulo").GetString());
+    }
+
     [Fact]
     public async Task Delete_ExistingEnsaio_Returns204()
     {

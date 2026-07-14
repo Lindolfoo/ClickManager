@@ -14,6 +14,7 @@ public class ClientesTests(WebFactory factory) : IClassFixture<WebFactory>
     {
         nome,
         email      = $"c_{Guid.NewGuid():N}@test.com",
+        telefone   = "(11) 99999-9999",
         tipoEnsaio = "Casamento",
         status     = "Ativo"
     };
@@ -42,7 +43,29 @@ public class ClientesTests(WebFactory factory) : IClassFixture<WebFactory>
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
         var body = await resp.Content.ReadFromJsonAsync<JsonElement>(J);
         Assert.Equal("Maria Silva", body.GetProperty("nome").GetString());
+        Assert.Equal("(11) 99999-9999", body.GetProperty("telefone").GetString());
         Assert.True(body.GetProperty("id").GetInt32() > 0);
+    }
+
+    [Fact]
+    public async Task Update_ExistingCliente_PersistsTelefone()
+    {
+        var (client, _, _) = await AuthHelper.CreateAuth(factory);
+        var createResp = await client.PostAsJsonAsync("/api/clientes", NewCliente("Original"));
+        var id         = (await createResp.Content.ReadFromJsonAsync<JsonElement>(J)).GetProperty("id").GetInt32();
+
+        var resp = await client.PutAsJsonAsync($"/api/clientes/{id}", new
+        {
+            nome = "Original", email = "upd@test.com", status = "Ativo", telefone = "(21) 98888-7777"
+        });
+
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        var body = await resp.Content.ReadFromJsonAsync<JsonElement>(J);
+        Assert.Equal("(21) 98888-7777", body.GetProperty("telefone").GetString());
+
+        var refetched = await (await client.GetAsync($"/api/clientes/{id}"))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        Assert.Equal("(21) 98888-7777", refetched.GetProperty("telefone").GetString());
     }
 
     [Fact]
