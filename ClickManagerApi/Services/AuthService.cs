@@ -6,9 +6,11 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace ClickManagerApi.Services;
 
+public record GeneratedToken(string Token, DateTime ExpiresAt);
+
 public interface IAuthService
 {
-    string GenerateToken(Fotografo fotografo);
+    GeneratedToken GenerateToken(Fotografo fotografo);
 }
 
 public class AuthService : IAuthService
@@ -17,11 +19,12 @@ public class AuthService : IAuthService
 
     public AuthService(IConfiguration config) => _config = config;
 
-    public string GenerateToken(Fotografo fotografo)
+    public GeneratedToken GenerateToken(Fotografo fotografo)
     {
         var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var hours = int.TryParse(_config["Jwt:ExpirationHours"], out var h) ? h : 24;
+        var expiresAt = DateTime.UtcNow.AddHours(hours);
 
         var claims = new[]
         {
@@ -34,10 +37,10 @@ public class AuthService : IAuthService
             issuer:             _config["Jwt:Issuer"],
             audience:           _config["Jwt:Audience"],
             claims:             claims,
-            expires:            DateTime.UtcNow.AddHours(hours),
+            expires:            expiresAt,
             signingCredentials: creds
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return new GeneratedToken(new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
     }
 }

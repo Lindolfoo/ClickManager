@@ -59,6 +59,9 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("auth")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest req)
     {
+        if (string.IsNullOrWhiteSpace(req.Senha) || req.Senha.Length < 8)
+            return BadRequest(new { message = "A senha deve ter pelo menos 8 caracteres." });
+
         if (await _db.Fotografos.AnyAsync(f => f.Email == req.Email))
             return Conflict(new { message = "Este e-mail já está cadastrado." });
 
@@ -218,12 +221,16 @@ public class AuthController : ControllerBase
 
     private static readonly HashSet<string> PresetsValidos = ["flores", "ceu", "vintage", "estrelas"];
 
-    private AuthResponse BuildResponse(Fotografo f) => new()
+    private AuthResponse BuildResponse(Fotografo f)
     {
-        Token     = _auth.GenerateToken(f),
-        ExpiresAt = DateTime.UtcNow.AddHours(24),
-        Fotografo = BuildDto(f)
-    };
+        var generated = _auth.GenerateToken(f);
+        return new AuthResponse
+        {
+            Token     = generated.Token,
+            ExpiresAt = generated.ExpiresAt,
+            Fotografo = BuildDto(f)
+        };
+    }
 
     [HttpGet("me")]
     [Authorize]

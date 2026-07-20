@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ClickManagerApi.Tests.Helpers;
+using Microsoft.AspNetCore.Hosting;
 using Xunit;
 
 namespace ClickManagerApi.Tests.FunctionalTests;
@@ -59,10 +60,27 @@ public class AuthTests(WebFactory factory) : IClassFixture<WebFactory>
         var email  = $"dup_{Guid.NewGuid():N}@test.com";
         var client = factory.CreateClient();
 
-        await client.PostAsJsonAsync("/api/auth/register", new { nome = "A", email, senha = "abc" });
-        var resp2 = await client.PostAsJsonAsync("/api/auth/register", new { nome = "B", email, senha = "abc" });
+        await client.PostAsJsonAsync("/api/auth/register", new { nome = "A", email, senha = "SenhaAbc123" });
+        var resp2 = await client.PostAsJsonAsync("/api/auth/register", new { nome = "B", email, senha = "SenhaAbc123" });
 
         Assert.Equal(HttpStatusCode.Conflict, resp2.StatusCode);
+    }
+
+    // Regression: Register aceitava senha "a" mesmo com ResetPassword/AlterarSenha
+    // exigindo 8+ caracteres — dava pra criar conta com senha que o próprio
+    // sistema recusaria depois, num reset.
+    [Fact]
+    public async Task Register_SenhaCurta_Returns400()
+    {
+        var client = factory.CreateClient();
+        var resp = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            nome  = "Senha Curta",
+            email = $"curta_{Guid.NewGuid():N}@test.com",
+            senha = "abc123"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, resp.StatusCode);
     }
 
     [Fact]
@@ -130,13 +148,43 @@ public class AuthTests(WebFactory factory) : IClassFixture<WebFactory>
         {
             nome       = "Pro User",
             email      = $"pro_{Guid.NewGuid():N}@test.com",
-            senha      = "Pro@123",
+            senha      = "Pro@12345",
             planoAtivo = "pro"
         });
 
         Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
         var body = await resp.Content.ReadFromJsonAsync<JsonElement>(J);
         Assert.Equal("pro", body.GetProperty("fotografo").GetProperty("planoAtivo").GetString());
+    }
+
+    // Regression: ExpiresAt no corpo da resposta vinha de um AddHours(24) fixo
+    // no AuthController, enquanto o próprio token JWT usava Jwt:ExpirationHours
+    // da config — se alguém mudasse a config, os dois valores divergiam.
+    [Fact]
+    public async Task Register_ExpiresAt_RespeitaConfigExpirationHours()
+    {
+        await using var customFactory = factory.WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, cfg) =>
+                cfg.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Jwt:ExpirationHours"] = "2"
+                })));
+
+        var client = customFactory.CreateClient();
+        var before = DateTime.UtcNow;
+        var resp = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            nome  = "Expira Rapido",
+            email = $"expira_{Guid.NewGuid():N}@test.com",
+            senha = "SenhaValida123"
+        });
+
+        Assert.Equal(HttpStatusCode.Created, resp.StatusCode);
+        var body = await resp.Content.ReadFromJsonAsync<JsonElement>(J);
+        var expiresAt = body.GetProperty("expiresAt").GetDateTime();
+
+        // Com Jwt:ExpirationHours=2, deve expirar por volta de +2h — nunca +24h.
+        Assert.InRange(expiresAt, before.AddHours(1.9), before.AddHours(2.1));
     }
 
     // ── Exclusão de conta (LGPD) ────────────────────────────────
