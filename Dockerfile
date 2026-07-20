@@ -16,6 +16,10 @@ RUN dotnet publish ClickManagerApi/ClickManagerApi.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
+# curl é só pro HEALTHCHECK (checar /health de verdade, não só que o runtime existe)
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Usuário não-root: se a aplicação for comprometida, o atacante não
 # tem privilégios de root dentro do container.
 RUN adduser --disabled-password --gecos "" --uid 1001 appuser
@@ -33,7 +37,9 @@ ENV ASPNETCORE_URLS=http://+:8080 \
 
 EXPOSE 8080
 
+# Bate no /health de verdade: se o banco cair, a app fica "unhealthy" (antes,
+# "dotnet --info" só provava que o runtime existe, mesmo com a API travada).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD ["dotnet", "--info"]
+  CMD curl -f http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "ClickManagerApi.dll"]

@@ -103,6 +103,11 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// Health check real: um load balancer precisa saber se o banco está de pé,
+// não só se o processo dotnet subiu (dotnet --info sempre "passa").
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>();
+
 var app = builder.Build();
 
 // Falha rápido em produção se segredos críticos ainda estiverem com os valores
@@ -173,6 +178,7 @@ if (app.Configuration.GetValue("RateLimiting:Enabled", true))
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 

@@ -199,4 +199,15 @@ public class SecurityTests(WebFactory factory) : IClassFixture<WebFactory>
         var resp = await factory.CreateClient().GetAsync("/api/contact/health");
         Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
     }
+
+    // Regression: o HEALTHCHECK do Dockerfile rodava "dotnet --info", que só
+    // prova que o runtime existe — nunca reflete se o banco caiu. /health
+    // precisa checar a conexão real com o banco (AddDbContextCheck).
+    [Fact]
+    public async Task Health_ChecksDatabaseConnection_Returns200()
+    {
+        var resp = await factory.CreateClient().GetAsync("/health");
+        Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
+        Assert.Equal("Healthy", await resp.Content.ReadAsStringAsync());
+    }
 }
