@@ -108,6 +108,27 @@ public class GaleriaTests(WebFactory factory) : IClassFixture<WebFactory>
         Assert.Equal(3, list.GetArrayLength());
     }
 
+    // Regression: se o arquivo N de um lote falhar a validação (formato/tamanho),
+    // os arquivos anteriores não podiam ficar gravados no disco sem uma linha
+    // correspondente no banco (órfãos). O lote inteiro deve ser tudo-ou-nada.
+    [Fact]
+    public async Task Upload_ComArquivoInvalidoNoMeioDoLote_NaoCriaNenhumaImagem()
+    {
+        var (client, ensaioId) = await SetupAsync();
+
+        var form = new MultipartFormDataContent();
+        form.Add(JpegContent("img0.jpg"), "arquivos", "img0.jpg");
+        form.Add(JpegContent("img1.jpg"), "arquivos", "img1.jpg");
+        form.Add(JpegContent("invalido.txt"), "arquivos", "invalido.txt"); // extensão não permitida
+
+        var resp = await client.PostAsync($"/api/galeria/{ensaioId}", form);
+        Assert.Equal(HttpStatusCode.BadRequest, resp.StatusCode);
+
+        var list = await (await client.GetAsync($"/api/galeria/{ensaioId}"))
+            .Content.ReadFromJsonAsync<JsonElement>(J);
+        Assert.Equal(0, list.GetArrayLength());
+    }
+
     [Fact]
     public async Task Upload_IncrementsTotalImagens()
     {

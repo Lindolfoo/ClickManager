@@ -2,6 +2,8 @@ namespace ClickManagerApi.Services;
 
 public interface IFileUploadService
 {
+    /// <summary>Valida tamanho/extensão sem gravar nada em disco. Lança InvalidOperationException se inválido.</summary>
+    void Validate(IFormFile file);
     Task<string> UploadAsync(IFormFile file, string subfolder);
     void Delete(string url);
 }
@@ -20,7 +22,7 @@ public class FileUploadService : IFileUploadService
         _http = http;
     }
 
-    public async Task<string> UploadAsync(IFormFile file, string subfolder)
+    public void Validate(IFormFile file)
     {
         if (file.Length > MaxBytes)
             throw new InvalidOperationException("Arquivo excede 10 MB.");
@@ -28,6 +30,12 @@ public class FileUploadService : IFileUploadService
         var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!Allowed.Contains(ext))
             throw new InvalidOperationException("Formato não permitido. Use jpg, png, webp ou gif.");
+    }
+
+    public async Task<string> UploadAsync(IFormFile file, string subfolder)
+    {
+        Validate(file);
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
 
         var root = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
         var dir  = Path.Combine(root, "uploads", subfolder);

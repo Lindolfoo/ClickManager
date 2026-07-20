@@ -62,9 +62,23 @@ public class WebFactory : WebApplicationFactory<Program>
 
 public class FakeFileUploadService : IFileUploadService
 {
+    private static readonly HashSet<string> Allowed = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+    private const long MaxBytes = 10 * 1024 * 1024; // 10 MB
+
+    public void Validate(IFormFile file)
+    {
+        if (file.Length > MaxBytes)
+            throw new InvalidOperationException("Arquivo excede 10 MB.");
+        if (!Allowed.Contains(Path.GetExtension(file.FileName).ToLowerInvariant()))
+            throw new InvalidOperationException("Formato não permitido. Use jpg, png, webp ou gif.");
+    }
+
     public Task<string> UploadAsync(IFormFile file, string subfolder)
-        => Task.FromResult(
+    {
+        Validate(file);
+        return Task.FromResult(
             $"http://localhost/uploads/{subfolder}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}");
+    }
 
     public void Delete(string url) { }
 }

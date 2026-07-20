@@ -57,6 +57,19 @@ public class GaleriaController : ControllerBase
         if (arquivos is null || arquivos.Length == 0)
             return BadRequest(new { message = "Nenhum arquivo enviado." });
 
+        // Valida todos os arquivos antes de gravar qualquer um: se o arquivo 3
+        // de 5 for inválido, os arquivos 1 e 2 não podem já estar no disco
+        // sem uma linha correspondente no banco (órfãos).
+        foreach (var arquivo in arquivos)
+        {
+            if (arquivo.Length == 0) continue;
+            try { _upload.Validate(arquivo); }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         var ordemMax = await _db.ImagensGaleria
             .Where(i => i.EnsaioId == ensaioId)
             .MaxAsync(i => (int?)i.Ordem) ?? 0;
@@ -66,12 +79,7 @@ public class GaleriaController : ControllerBase
         {
             if (arquivo.Length == 0) continue;
 
-            string url;
-            try { url = await _upload.UploadAsync(arquivo, "galeria"); }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var url = await _upload.UploadAsync(arquivo, "galeria");
 
             var imagem = new ImagemGaleria
             {
