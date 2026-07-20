@@ -27,11 +27,44 @@ public class EmailService : IEmailService
 
     private async Task SendConfirmationToUserAsync(ContactRequest request)
     {
-        var planLabel = GetPlanLabel(request.Plan);
-        var phone = string.IsNullOrEmpty(request.Phone)   ? "" : "<p><strong>WhatsApp:</strong> " + request.Phone + "</p>";
-        var extra = string.IsNullOrEmpty(request.Message) ? "" : "<p><strong>Mensagem:</strong> " + request.Message + "</p>";
+        var html = BuildConfirmationHtml(request);
 
-        var html =
+        var m = new MimeMessage();
+        m.From.Add(new MailboxAddress(_settings.SenderName, _settings.SenderEmail));
+        m.To.Add(new MailboxAddress(request.Name, request.Email));
+        m.Subject = "Recebemos sua solicitacao - Click Manager";
+        m.Body    = new BodyBuilder { HtmlBody = html }.ToMessageBody();
+        await SendAsync(m);
+        _logger.LogInformation("Confirmacao enviada para {Email}", request.Email);
+    }
+
+    private async Task SendNotificationToAdminAsync(ContactRequest request)
+    {
+        var html = BuildAdminNotificationHtml(request);
+
+        var m = new MimeMessage();
+        m.From.Add(new MailboxAddress(_settings.SenderName, _settings.SenderEmail));
+        m.To.Add(new MailboxAddress("Admin", _settings.AdminEmail));
+        m.Subject = "Novo lead: " + request.Name + " - " + GetPlanLabel(request.Plan);
+        m.Body    = new BodyBuilder { HtmlBody = html }.ToMessageBody();
+        await SendAsync(m);
+        _logger.LogInformation("Notificacao admin enviada.");
+    }
+
+    // Público e estático: strings puras, sem dependência de SMTP, então dá pra
+    // testar a codificação HTML (campos vêm de um endpoint público, sem auth)
+    // sem precisar simular o envio de e-mail.
+    public static string BuildConfirmationHtml(ContactRequest request)
+    {
+        var planLabel = GetPlanLabel(request.Plan);
+        var name    = System.Net.WebUtility.HtmlEncode(request.Name);
+        var email   = System.Net.WebUtility.HtmlEncode(request.Email);
+        var phoneEnc = string.IsNullOrEmpty(request.Phone)   ? null : System.Net.WebUtility.HtmlEncode(request.Phone);
+        var messageEnc = string.IsNullOrEmpty(request.Message) ? null : System.Net.WebUtility.HtmlEncode(request.Message);
+        var phone = phoneEnc is null ? "" : "<p><strong>WhatsApp:</strong> " + phoneEnc + "</p>";
+        var extra = messageEnc is null ? "" : "<p><strong>Mensagem:</strong> " + messageEnc + "</p>";
+
+        return
             "<!DOCTYPE html><html><head><meta charset='UTF-8'/><style>" +
             "body{font-family:Arial,sans-serif;background:#f5f3fb;margin:0}" +
             ".w{max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden}" +
@@ -46,29 +79,25 @@ public class EmailService : IEmailService
             ".f{background:#ede9f7;padding:16px 40px;text-align:center;font-size:.8rem;color:#6b6480}" +
             "</style></head><body><div class='w'>" +
             "<div class='h'><h1>Click Manager</h1><p>Gestao para fotografos</p></div>" +
-            "<div class='b'><h2>Ola, " + request.Name + "!</h2>" +
+            "<div class='b'><h2>Ola, " + name + "!</h2>" +
             "<p>Recebemos sua solicitacao. Entraremos em contato em breve.</p>" +
             "<div class='box'>" +
             "<p><strong>Plano:</strong> " + planLabel + "</p>" +
-            "<p><strong>E-mail:</strong> " + request.Email + "</p>" +
+            "<p><strong>E-mail:</strong> " + email + "</p>" +
             phone + extra + "</div></div>" +
             "<div class='f'>2026 Click Manager - PIM III - UNIP ADS</div>" +
             "</div></body></html>";
-
-        var m = new MimeMessage();
-        m.From.Add(new MailboxAddress(_settings.SenderName, _settings.SenderEmail));
-        m.To.Add(new MailboxAddress(request.Name, request.Email));
-        m.Subject = "Recebemos sua solicitacao - Click Manager";
-        m.Body    = new BodyBuilder { HtmlBody = html }.ToMessageBody();
-        await SendAsync(m);
-        _logger.LogInformation("Confirmacao enviada para {Email}", request.Email);
     }
 
-    private async Task SendNotificationToAdminAsync(ContactRequest request)
+    public static string BuildAdminNotificationHtml(ContactRequest request)
     {
         var planLabel = GetPlanLabel(request.Plan);
+        var name    = System.Net.WebUtility.HtmlEncode(request.Name);
+        var email   = System.Net.WebUtility.HtmlEncode(request.Email);
+        var phone   = System.Net.WebUtility.HtmlEncode(request.Phone   ?? "-");
+        var message = System.Net.WebUtility.HtmlEncode(request.Message ?? "-");
 
-        var html =
+        return
             "<!DOCTYPE html><html><head><meta charset='UTF-8'/><style>" +
             "body{font-family:Arial,sans-serif;background:#f5f3fb}" +
             ".c{max-width:500px;margin:30px auto;background:#fff;border-radius:12px;padding:28px}" +
@@ -77,21 +106,13 @@ public class EmailService : IEmailService
             "td{padding:8px 12px;border-bottom:1px solid #ede9f7}" +
             "td:first-child{font-weight:600;color:#5b21b6;width:120px}" +
             "</style></head><body><div class='c'><h2>Novo lead</h2><table>" +
-            "<tr><td>Nome</td><td>"     + request.Name                              + "</td></tr>" +
-            "<tr><td>E-mail</td><td>"   + request.Email                             + "</td></tr>" +
-            "<tr><td>WhatsApp</td><td>" + (request.Phone   ?? "-")                  + "</td></tr>" +
+            "<tr><td>Nome</td><td>"     + name                                      + "</td></tr>" +
+            "<tr><td>E-mail</td><td>"   + email                                     + "</td></tr>" +
+            "<tr><td>WhatsApp</td><td>" + phone                                     + "</td></tr>" +
             "<tr><td>Plano</td><td>"    + planLabel                                 + "</td></tr>" +
-            "<tr><td>Mensagem</td><td>" + (request.Message ?? "-")                  + "</td></tr>" +
+            "<tr><td>Mensagem</td><td>" + message                                   + "</td></tr>" +
             "<tr><td>Data</td><td>"     + DateTime.Now.ToString("dd/MM/yyyy HH:mm") + "</td></tr>" +
             "</table></div></body></html>";
-
-        var m = new MimeMessage();
-        m.From.Add(new MailboxAddress(_settings.SenderName, _settings.SenderEmail));
-        m.To.Add(new MailboxAddress("Admin", _settings.AdminEmail));
-        m.Subject = "Novo lead: " + request.Name + " - " + planLabel;
-        m.Body    = new BodyBuilder { HtmlBody = html }.ToMessageBody();
-        await SendAsync(m);
-        _logger.LogInformation("Notificacao admin enviada.");
     }
 
     public async Task SendPasswordResetEmailAsync(string toEmail, string toName, string resetLink)

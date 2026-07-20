@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using ClickManagerApi.Models;
+using ClickManagerApi.Services;
 using ClickManagerApi.Tests.Helpers;
 using Xunit;
 
@@ -162,6 +164,31 @@ public class SecurityTests(WebFactory factory) : IClassFixture<WebFactory>
         });
         // [MaxLength(150)] → 400 (ou pode ser 413 se request size limit ativo)
         Assert.NotEqual(HttpStatusCode.InternalServerError, resp.StatusCode);
+    }
+
+    // Regression: SendContactEmailsAsync interpolava Name/Email/Phone/Message
+    // cru no HTML do e-mail — endpoint público (/api/contact), então dava pra
+    // injetar links/conteúdo de phishing no e-mail que chega no admin.
+    [Fact]
+    public void ContactEmailHtml_EncodesUserSuppliedFields()
+    {
+        var payload = "<script>alert('xss')</script>";
+        var request = new ContactRequest
+        {
+            Name    = payload,
+            Email   = payload,
+            Phone   = payload,
+            Plan    = "starter",
+            Message = payload
+        };
+
+        var confirmationHtml = EmailService.BuildConfirmationHtml(request);
+        var adminHtml        = EmailService.BuildAdminNotificationHtml(request);
+
+        Assert.DoesNotContain("<script>", confirmationHtml);
+        Assert.DoesNotContain("<script>", adminHtml);
+        Assert.Contains("&lt;script&gt;", confirmationHtml);
+        Assert.Contains("&lt;script&gt;", adminHtml);
     }
 
     // ── 4. Endpoint público de health ────────────────────────────────
