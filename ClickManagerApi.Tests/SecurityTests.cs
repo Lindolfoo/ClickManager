@@ -5,6 +5,7 @@ using System.Text.Json;
 using ClickManagerApi.Models;
 using ClickManagerApi.Services;
 using ClickManagerApi.Tests.Helpers;
+using Microsoft.AspNetCore.Hosting;
 using Xunit;
 
 namespace ClickManagerApi.Tests;
@@ -189,6 +190,43 @@ public class SecurityTests(WebFactory factory) : IClassFixture<WebFactory>
         Assert.DoesNotContain("<script>", adminHtml);
         Assert.Contains("&lt;script&gt;", confirmationHtml);
         Assert.Contains("&lt;script&gt;", adminHtml);
+    }
+
+    // Regression: sem UseForwardedHeaders, RemoteIpAddress atrás de um proxy
+    // (Railway/Render/nginx) é sempre o IP do proxy — o rate limit, que
+    // particiona por IP, vira um balde só compartilhado por todo mundo.
+    [Fact]
+    public async Task RateLimit_PartitionsByForwardedForHeader_NotByProxyIp()
+    {
+        await using var customFactory = factory.WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, cfg) =>
+                cfg.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["RateLimiting:Enabled"] = "true"
+                })));
+
+        var client = customFactory.CreateClient();
+
+        Task<HttpResponseMessage> SendAsAsync(string forwardedFor)
+        {
+            var req = new HttpRequestMessage(HttpMethod.Post, "/api/auth/forgot-password")
+            {
+                Content = JsonContent.Create(new { email = "quem@test.com" })
+            };
+            req.Headers.Add("X-Forwarded-For", forwardedFor);
+            return client.SendAsync(req);
+        }
+
+        // Esgota o limite da política "auth" (10/15min) só para o IP 1.2.3.4
+        for (var i = 0; i < 10; i++)
+            Assert.Equal(HttpStatusCode.OK, (await SendAsAsync("1.2.3.4")).StatusCode);
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await SendAsAsync("1.2.3.4")).StatusCode);
+
+        // Um IP diferente não pode ser afetado pelo limite do 1.2.3.4 — se
+        // RemoteIpAddress caísse pro IP do proxy (igual para os dois), essa
+        // requisição também levaria 429.
+        Assert.Equal(HttpStatusCode.OK, (await SendAsAsync("5.6.7.8")).StatusCode);
     }
 
     // ── 4. Endpoint público de health ────────────────────────────────

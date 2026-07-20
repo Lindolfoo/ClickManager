@@ -5,10 +5,25 @@ using Microsoft.AspNetCore.RateLimiting;
 using ClickManagerApi.Models;
 using ClickManagerApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Atrás de proxy (Railway/Render/nginx), a conexão TCP chega do proxy, não do
+// cliente real — sem isso, RemoteIpAddress é sempre o IP do proxy e o rate
+// limit (que particiona por IP) vira um balde só compartilhado por todo mundo.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                             | ForwardedHeaders.XForwardedProto;
+    // Em PaaS o IP do proxy varia e não é conhecido de antemão; limpar as
+    // listas aceita o cabeçalho de qualquer origem. Se um dia isso rodar
+    // atrás de um nginx próprio (IP fixo), restrinja com KnownProxies.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // EF Core + PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -145,6 +160,10 @@ using (var scope = app.Services.CreateScope())
     else
         db.Database.Migrate();
 }
+
+// Primeiro middleware do pipeline: tudo depois (rate limit, HTTPS redirect,
+// logs) precisa já enxergar o IP/scheme reais do cliente, não os do proxy.
+app.UseForwardedHeaders();
 
 // Tratamento global de exceções — primeiro do pipeline para capturar tudo
 app.UseExceptionHandler();
